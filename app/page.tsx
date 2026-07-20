@@ -1,11 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   TrendingUp, Flame, ArrowUp, Bookmark, ExternalLink, Zap,
   Search, Bell, User, BarChart3, Star, X, DollarSign,
-  Target, Megaphone, AlertCircle,
+  Target, Megaphone, AlertCircle, LogOut, Check,
 } from 'lucide-react'
+import { createBrowserClient } from '@/app/lib/supabase'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 type Product = {
   id: string
@@ -177,13 +181,99 @@ function AnalysisModal({
                       <span className="shrink-0 w-5 h-5 bg-orange-600/30 text-orange-400 rounded-md flex items-center justify-center text-xs font-bold border border-orange-500/30">
                         {i + 1}
                       </span>
-                      <p className="text-gray-300 text-sm leading-relaxed italic">"{hook}"</p>
+                      <p className="text-gray-300 text-sm leading-relaxed italic">&ldquo;{hook}&rdquo;</p>
                     </div>
                   ))}
                 </div>
               </div>
             </>
           )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function UpgradeModal({ onClose, onUpgrade, upgrading }: { onClose: () => void; onUpgrade: () => void; upgrading: boolean }) {
+  const perks = ['Unlimited AI analyses', 'Full product feed', 'Breakout alerts', 'Priority support']
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="relative w-full max-w-md bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl p-8 text-center">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors border border-gray-700"
+        >
+          <X size={16} className="text-gray-400" />
+        </button>
+
+        <div className="w-14 h-14 bg-indigo-600/20 border border-indigo-500/30 rounded-full flex items-center justify-center mx-auto mb-5">
+          <Zap size={26} className="text-indigo-400" />
+        </div>
+
+        <h2 className="text-xl font-bold text-white mb-2">You&apos;ve reached your free limit</h2>
+        <p className="text-gray-400 text-sm leading-relaxed mb-6">
+          You&apos;ve used all 3 of your free AI analyses. Upgrade to Pro for unlimited analyses, full product access, and more.
+        </p>
+
+        <div className="bg-gray-800/60 border border-gray-700 rounded-xl p-4 mb-6 text-left space-y-2.5">
+          {perks.map((perk) => (
+            <div key={perk} className="flex items-center gap-2.5">
+              <div className="w-4 h-4 rounded-full bg-indigo-600/30 flex items-center justify-center shrink-0">
+                <Check size={10} className="text-indigo-400" />
+              </div>
+              <span className="text-gray-300 text-sm">{perk}</span>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={onUpgrade}
+          disabled={upgrading}
+          className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 mb-3"
+        >
+          {upgrading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Redirecting…
+            </>
+          ) : (
+            'Upgrade to Pro - $29/month'
+          )}
+        </button>
+
+        <button
+          onClick={onClose}
+          className="text-gray-500 hover:text-gray-300 text-sm transition-colors"
+        >
+          Not now
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function ProductCardSkeleton() {
+  return (
+    <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden animate-pulse">
+      <div className="h-48 bg-gray-800" />
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex-1 space-y-2">
+            <div className="h-3 w-20 bg-gray-800 rounded" />
+            <div className="h-4 w-3/4 bg-gray-800 rounded" />
+          </div>
+          <div className="w-14 h-14 rounded-full bg-gray-800 shrink-0" />
+        </div>
+        <div className="space-y-2 mb-4">
+          <div className="h-3 w-full bg-gray-800 rounded" />
+          <div className="h-3 w-2/3 bg-gray-800 rounded" />
+        </div>
+        <div className="flex gap-2">
+          <div className="flex-1 h-10 bg-gray-800 rounded-xl" />
+          <div className="w-10 h-10 bg-gray-800 rounded-xl shrink-0" />
         </div>
       </div>
     </div>
@@ -253,16 +343,20 @@ export default function Dashboard() {
   const [analysisLoading, setAnalysisLoading] = useState(false)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
 
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [upgrading, setUpgrading] = useState(false)
+
+  const [user, setUser] = useState<SupabaseUser | null>(null)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
+
   const niches = ['All', ...Array.from(new Set(products.map((p) => p.niche)))]
 
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const { createClient } = await import('@supabase/supabase-js')
-        const supabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
+        const supabase = createBrowserClient()
         const { data, error } = await supabase
           .from('products')
           .select('*')
@@ -277,6 +371,25 @@ export default function Dashboard() {
       }
     }
     fetchProducts()
+  }, [])
+
+  useEffect(() => {
+    const supabase = createBrowserClient()
+    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   async function analyzeProduct(product: Product) {
@@ -295,12 +408,15 @@ export default function Dashboard() {
         }),
       })
       const data = await res.json()
-      if (!res.ok) {
+      if (res.status === 403 && data?.error === 'limit_reached') {
+        closeModal()
+        setShowUpgradeModal(true)
+      } else if (!res.ok) {
         setAnalysisError(data?.error ?? 'Analysis failed. Please try again.')
       } else {
         setAnalysisResult(data)
       }
-    } catch (err) {
+    } catch {
       setAnalysisError('Network error. Please try again.')
     } finally {
       setAnalysisLoading(false)
@@ -311,6 +427,27 @@ export default function Dashboard() {
     setSelectedProduct(null)
     setAnalysisResult(null)
     setAnalysisError(null)
+  }
+
+  async function handleUpgrade() {
+    setUpgrading(true)
+    try {
+      const res = await fetch('/api/stripe/checkout', { method: 'POST' })
+      const data = await res.json()
+      if (data?.url) {
+        window.location.href = data.url
+      }
+    } finally {
+      setUpgrading(false)
+    }
+  }
+
+  async function handleSignOut() {
+    const supabase = createBrowserClient()
+    await supabase.auth.signOut()
+    setUserMenuOpen(false)
+    router.push('/auth/login')
+    router.refresh()
   }
 
   const filtered = filter === 'All' ? products : products.filter((p) => p.niche === filter)
@@ -324,6 +461,14 @@ export default function Dashboard() {
           loading={analysisLoading}
           error={analysisError}
           onClose={closeModal}
+        />
+      )}
+
+      {showUpgradeModal && (
+        <UpgradeModal
+          onClose={() => setShowUpgradeModal(false)}
+          onUpgrade={handleUpgrade}
+          upgrading={upgrading}
         />
       )}
 
@@ -349,9 +494,45 @@ export default function Dashboard() {
                 <Bookmark size={16} />
                 <span className="hidden sm:inline">Saved</span>
               </button>
-              <button className="ml-2 w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center hover:bg-indigo-500 transition-colors">
-                <User size={15} className="text-white" />
-              </button>
+              {user ? (
+                <div className="relative ml-2" ref={menuRef}>
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center hover:bg-indigo-500 transition-colors"
+                  >
+                    <User size={15} className="text-white" />
+                  </button>
+                  {userMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden z-50">
+                      <div className="px-4 py-3 border-b border-gray-800">
+                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                      </div>
+                      <Link
+                        href="/account"
+                        className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <User size={14} className="text-gray-400" />
+                        My Account
+                      </Link>
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:text-red-300 hover:bg-gray-800 transition-colors"
+                      >
+                        <LogOut size={14} />
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  href="/auth/login"
+                  className="ml-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-colors"
+                >
+                  Sign In
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -361,10 +542,15 @@ export default function Dashboard() {
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">
             <Star size={16} className="text-indigo-400" />
-            <span className="text-indigo-400 text-sm font-medium">Today's winning products</span>
+            <span className="text-indigo-400 text-sm font-medium">Today&apos;s winning products</span>
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Product Research Feed</h1>
           <p className="text-gray-400">Curated daily. AI-analyzed. Ready to test.</p>
+          {user && (
+            <p className="text-gray-500 text-sm mt-2">
+              Welcome back, {(user.user_metadata?.full_name as string | undefined)?.split(' ')[0] ?? user.email?.split('@')[0]}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-8">
@@ -373,7 +559,7 @@ export default function Dashboard() {
             { label: 'Avg demand score', value: products.length ? Math.round(products.reduce((a, b) => a + b.demand_score, 0) / products.length).toString() : '0', icon: <TrendingUp size={16} className="text-green-400" /> },
             { label: 'Hot products', value: products.filter(p => p.trend_label === 'Hot').length.toString(), icon: <Flame size={16} className="text-red-400" /> },
           ].map((stat) => (
-            <div key={stat.label} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+            <div key={stat.label} className="h-full bg-gray-900 border border-gray-800 rounded-xl p-4 flex flex-col justify-center">
               <div className="flex items-center gap-2 mb-1">
                 {stat.icon}
                 <span className="text-gray-500 text-xs font-medium">{stat.label}</span>
@@ -401,8 +587,8 @@ export default function Dashboard() {
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-gray-900 border border-gray-800 rounded-2xl h-80 animate-pulse" />
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <ProductCardSkeleton key={i} />
             ))}
           </div>
         ) : filtered.length === 0 ? (

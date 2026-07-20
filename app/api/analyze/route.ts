@@ -1,8 +1,32 @@
 import OpenAI from 'openai'
+import { createServerClient } from '@/app/lib/supabase'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
+const FREE_ANALYSIS_LIMIT = 3
+
 export async function POST(request: Request) {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return Response.json({ error: 'unauthorized' }, { status: 401 })
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('plan, analyses_used')
+    .eq('id', user.id)
+    .single()
+
+  if (profileError || !profile) {
+    return Response.json({ error: 'profile_not_found' }, { status: 404 })
+  }
+
+  if (profile.plan === 'free' && profile.analyses_used >= FREE_ANALYSIS_LIMIT) {
+    return Response.json({ error: 'limit_reached', analyses_used: FREE_ANALYSIS_LIMIT }, { status: 403 })
+  }
+
   const { title, description, niche } = await request.json()
 
   const prompt = `You are an expert e-commerce analyst specializing in dropshipping. Analyze this product and return ONLY a JSON object with no markdown.
@@ -28,5 +52,11 @@ Return exactly this JSON structure:
   })
 
   const result = JSON.parse(completion.choices[0].message.content!)
+
+  await supabase
+    .from('profiles')
+    .update({ analyses_used: profile.analyses_used + 1 })
+    .eq('id', user.id)
+
   return Response.json(result)
 }
