@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  BarChart3, Search, Bell, Bookmark, User, LogOut,
+  Rocket, Search, Bell, Bookmark, User, LogOut,
   ArrowLeft, Zap, CheckCircle, Check,
 } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
@@ -48,9 +48,9 @@ function Navbar({ user }: { user: SupabaseUser | null }) {
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-              <BarChart3 size={18} className="text-white" />
+              <Rocket size={18} className="text-white" />
             </div>
-            <span className="font-bold text-white text-lg">Ecom Advantage</span>
+            <span className="font-bold text-white text-lg">Launchory</span>
             <span className="text-xs bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full font-medium ml-1">BETA</span>
           </Link>
           <div className="flex items-center gap-1">
@@ -176,7 +176,7 @@ export default function AccountPage() {
             {isPro && (
               <div className="flex items-center gap-3 p-4 bg-green-500/10 border border-green-500/30 rounded-xl">
                 <CheckCircle size={18} className="text-green-400 shrink-0" />
-                <p className="text-green-400 text-sm font-medium">You&apos;re on Pro — thanks for supporting Ecom Advantage.</p>
+                <p className="text-green-400 text-sm font-medium">You&apos;re on Pro — thanks for supporting Launchory.</p>
               </div>
             )}
 

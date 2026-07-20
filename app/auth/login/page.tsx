@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { BarChart3, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react'
+import { Rocket, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 
 export default function LoginPage() {
@@ -60,9 +60,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-8">
           <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
-            <BarChart3 size={20} className="text-white" />
+            <Rocket size={20} className="text-white" />
           </div>
-          <span className="font-bold text-white text-xl">Ecom Advantage</span>
+          <span className="font-bold text-white text-xl">Launchory</span>
         </div>
 
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8">

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   TrendingUp, Flame, ArrowUp, Bookmark, ExternalLink, Zap,
-  Search, Bell, User, BarChart3, Star, X, DollarSign,
+  Search, Bell, User, BarChart3, Rocket, Star, X, DollarSign,
   Target, Megaphone, AlertCircle, LogOut, Check,
 } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
@@ -477,9 +477,9 @@ export default function Dashboard() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                <BarChart3 size={18} className="text-white" />
+                <Rocket size={18} className="text-white" />
               </div>
-              <span className="font-bold text-white text-lg">Ecom Advantage</span>
+              <span className="font-bold text-white text-lg">Launchory</span>
               <span className="text-xs bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full font-medium ml-1">BETA</span>
             </div>
             <div className="flex items-center gap-1">

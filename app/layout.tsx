@@ -5,8 +5,8 @@ import "./globals.css";
 const geist = Geist({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Ecom Advantage — Product Research",
-  description: "Find winning Shopify products before your competitors",
+  title: "Launchory — Find Winning Products Faster",
+  description: "AI-powered product research platform for Shopify dropshippers",
 };
 
 export default function RootLayout({

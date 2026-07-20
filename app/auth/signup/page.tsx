@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { BarChart3, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react'
+import { Rocket, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 
 export default function SignupPage() {
@@ -59,9 +59,9 @@ export default function SignupPage() {
         <div className="w-full max-w-md">
           <div className="flex items-center justify-center gap-2 mb-8">
             <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
-              <BarChart3 size={20} className="text-white" />
+              <Rocket size={20} className="text-white" />
             </div>
-            <span className="font-bold text-white text-xl">Ecom Advantage</span>
+            <span className="font-bold text-white text-xl">Launchory</span>
           </div>
           <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 text-center">
             <div className="w-14 h-14 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-5">
@@ -88,9 +88,9 @@ export default function SignupPage() {
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-8">
           <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
-            <BarChart3 size={20} className="text-white" />
+            <Rocket size={20} className="text-white" />
           </div>
-          <span className="font-bold text-white text-xl">Ecom Advantage</span>
+          <span className="font-bold text-white text-xl">Launchory</span>
         </div>
 
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8">
