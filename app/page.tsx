@@ -347,6 +347,7 @@ export default function Dashboard() {
   const [upgrading, setUpgrading] = useState(false)
 
   const [user, setUser] = useState<SupabaseUser | null>(null)
+  const [authChecked, setAuthChecked] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -375,12 +376,23 @@ export default function Dashboard() {
 
   useEffect(() => {
     const supabase = createBrowserClient()
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        router.push('/landing')
+        return
+      }
+      setUser(data.user)
+      setAuthChecked(true)
+    })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+      if (!session?.user) {
+        router.push('/landing')
+        return
+      }
+      setUser(session.user)
     })
     return () => subscription.unsubscribe()
-  }, [])
+  }, [router])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -451,6 +463,14 @@ export default function Dashboard() {
   }
 
   const filtered = filter === 'All' ? products : products.filter((p) => p.niche === filter)
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-950">
