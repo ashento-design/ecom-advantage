@@ -21,6 +21,19 @@ type Product = {
   demand_score: number
   trend_label: string
   is_featured: boolean
+  created_at: string
+}
+
+function getGreeting() {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 18) return 'Good afternoon'
+  return 'Good evening'
+}
+
+function isNewProduct(createdAt: string) {
+  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
+  return Date.now() - new Date(createdAt).getTime() < sevenDaysMs
 }
 
 type AnalysisResult = {
@@ -258,7 +271,7 @@ function UpgradeModal({ onClose, onUpgrade, upgrading }: { onClose: () => void; 
 function ProductCardSkeleton() {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden animate-pulse">
-      <div className="h-48 bg-gray-800" />
+      <div className="h-64 bg-gray-800" />
       <div className="p-5">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex-1 space-y-2">
@@ -284,17 +297,22 @@ function ProductCard({ product, onAnalyze }: { product: Product; onAnalyze: (p: 
   const trend = trendConfig[product.trend_label] ?? trendConfig['Rising']
   return (
     <div className="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-all duration-200 hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5">
-      <div className="relative h-48 overflow-hidden bg-gray-800">
+      <div className="relative h-64 overflow-hidden bg-gray-800">
         <img
           src={product.image_url}
           alt={product.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-3 left-3 flex items-center gap-2">
           <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${trend.color}`}>
             {trend.icon}
             {product.trend_label}
           </span>
+          {isNewProduct(product.created_at) && (
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-indigo-600 text-white">
+              NEW
+            </span>
+          )}
         </div>
         <div className="absolute top-3 right-3">
           <button className="w-8 h-8 bg-gray-900/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors border border-gray-700">
@@ -302,8 +320,8 @@ function ProductCard({ product, onAnalyze }: { product: Product; onAnalyze: (p: 
           </button>
         </div>
       </div>
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-3 mb-3">
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3 mb-2">
           <div className="flex-1">
             <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">{product.niche}</span>
             <h3 className="text-white font-semibold text-base mt-0.5 leading-snug">{product.title}</h3>
@@ -559,6 +577,14 @@ export default function Dashboard() {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {user && (
+          <div className="mb-6 bg-gradient-to-r from-indigo-600/10 to-transparent border border-indigo-500/20 rounded-2xl px-5 py-4">
+            <p className="text-white font-semibold text-base">
+              {getGreeting()}, {(user.user_metadata?.full_name as string | undefined)?.split(' ')[0] ?? user.email?.split('@')[0]}! Here are today&apos;s winning products.
+            </p>
+          </div>
+        )}
+
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">
             <Star size={16} className="text-indigo-400" />
@@ -566,20 +592,15 @@ export default function Dashboard() {
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Product Research Feed</h1>
           <p className="text-gray-400">Curated daily. AI-analyzed. Ready to test.</p>
-          {user && (
-            <p className="text-gray-500 text-sm mt-2">
-              Welcome back, {(user.user_metadata?.full_name as string | undefined)?.split(' ')[0] ?? user.email?.split('@')[0]}
-            </p>
-          )}
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-8">
           {[
-            { label: 'Products today', value: products.length.toString(), icon: <BarChart3 size={16} className="text-indigo-400" /> },
-            { label: 'Avg demand score', value: products.length ? Math.round(products.reduce((a, b) => a + b.demand_score, 0) / products.length).toString() : '0', icon: <TrendingUp size={16} className="text-green-400" /> },
-            { label: 'Hot products', value: products.filter(p => p.trend_label === 'Hot').length.toString(), icon: <Flame size={16} className="text-red-400" /> },
+            { label: 'Products today', value: products.length.toString(), icon: <BarChart3 size={16} className="text-indigo-400" />, border: 'border-indigo-500/30' },
+            { label: 'Avg demand score', value: products.length ? Math.round(products.reduce((a, b) => a + b.demand_score, 0) / products.length).toString() : '0', icon: <TrendingUp size={16} className="text-green-400" />, border: 'border-green-500/30' },
+            { label: 'Hot products', value: products.filter(p => p.trend_label === 'Hot').length.toString(), icon: <Flame size={16} className="text-red-400" />, border: 'border-red-500/30' },
           ].map((stat) => (
-            <div key={stat.label} className="h-full bg-gray-900 border border-gray-800 rounded-xl p-4 flex flex-col justify-center">
+            <div key={stat.label} className={`h-full bg-gray-900 border ${stat.border} rounded-xl p-4 flex flex-col justify-center`}>
               <div className="flex items-center gap-2 mb-1">
                 {stat.icon}
                 <span className="text-gray-500 text-xs font-medium">{stat.label}</span>
