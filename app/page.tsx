@@ -207,7 +207,7 @@ function AnalysisModal({
   )
 }
 
-function UpgradeModal({ onClose, onUpgrade, upgrading }: { onClose: () => void; onUpgrade: () => void; upgrading: boolean }) {
+function UpgradeModal({ onClose, onUpgrade, upgrading, error }: { onClose: () => void; onUpgrade: () => void; upgrading: boolean; error: string | null }) {
   const perks = ['Unlimited AI analyses', 'Full product feed', 'Breakout alerts', 'Priority support']
   return (
     <div
@@ -241,6 +241,13 @@ function UpgradeModal({ onClose, onUpgrade, upgrading }: { onClose: () => void; 
             </div>
           ))}
         </div>
+
+        {error && (
+          <div className="flex items-start gap-3 p-3.5 mb-4 bg-red-500/10 border border-red-500/30 rounded-xl text-left">
+            <AlertCircle size={16} className="text-red-400 mt-0.5 shrink-0" />
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
 
         <button
           onClick={onUpgrade}
@@ -363,6 +370,7 @@ export default function Dashboard() {
 
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [upgrading, setUpgrading] = useState(false)
+  const [upgradeError, setUpgradeError] = useState<string | null>(null)
 
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
@@ -461,13 +469,20 @@ export default function Dashboard() {
 
   async function handleUpgrade() {
     setUpgrading(true)
+    setUpgradeError(null)
     try {
       const res = await fetch('/api/stripe/checkout', { method: 'POST' })
-      const data = await res.json()
-      if (data?.url) {
-        window.location.href = data.url
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !data?.url) {
+        console.error('Stripe checkout failed:', data?.error ?? res.statusText)
+        setUpgradeError(data?.error ?? 'Something went wrong starting checkout. Please try again.')
+        setUpgrading(false)
+        return
       }
-    } finally {
+      window.location.href = data.url
+    } catch (err) {
+      console.error('Stripe checkout network error:', err)
+      setUpgradeError('Network error. Please try again.')
       setUpgrading(false)
     }
   }
@@ -507,6 +522,7 @@ export default function Dashboard() {
           onClose={() => setShowUpgradeModal(false)}
           onUpgrade={handleUpgrade}
           upgrading={upgrading}
+          error={upgradeError}
         />
       )}
 
