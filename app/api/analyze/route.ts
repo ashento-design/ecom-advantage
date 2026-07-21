@@ -42,7 +42,11 @@ Return exactly this JSON structure:
   "suggested_price": "<range like $19.99-$34.99>",
   "ad_angles": ["<angle 1>", "<angle 2>", "<angle 3>"],
   "hooks": ["<hook 1>", "<hook 2>", "<hook 3>"],
-  "summary": "<2-3 sentences on market opportunity and why this product works>"
+  "summary": "<2-3 sentences on market opportunity and why this product works>",
+  "target_audience": "<who this product is for, e.g. 'Pet owners aged 25-45'>",
+  "best_platforms": ["<platform 1>", "<platform 2>", "<platform 3>"],
+  "seasonality": "<e.g. 'Year-round' or 'Peak: Q4'>",
+  "wow_factor": "<one sentence on what makes this product viral-worthy>"
 }`
 
   const completion = await openai.chat.completions.create({
@@ -68,6 +72,10 @@ Return exactly this JSON structure:
       ad_angles: result.ad_angles,
       hooks: result.hooks,
       summary: result.summary,
+      target_audience: result.target_audience,
+      best_platforms: result.best_platforms,
+      seasonality: result.seasonality,
+      wow_factor: result.wow_factor,
     })
     if (insertError) {
       console.error('Failed to persist analysis:', insertError.message)
