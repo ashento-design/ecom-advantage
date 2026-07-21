@@ -1,5 +1,11 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { Rocket, ArrowLeft } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: 'Terms of Service',
+  description: "Launchory's terms of service for using our AI-powered product research platform.",
+}
 
 const sections = [
   {

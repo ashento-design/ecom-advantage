@@ -5,8 +5,25 @@ import "./globals.css";
 const geist = Geist({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Launchory — Find Winning Products Faster",
-  description: "AI-powered product research platform for Shopify dropshippers",
+  metadataBase: new URL("https://ecom-advantage.vercel.app"),
+  title: {
+    default: "Launchory — Find Winning Products Faster",
+    template: "%s — Launchory",
+  },
+  description: "AI-powered product research platform for Shopify dropshippers. Discover trends, analyze competition, and generate ad angles in seconds.",
+  openGraph: {
+    title: "Launchory — Find Winning Products Faster",
+    description: "AI-powered product research platform for Shopify dropshippers. Discover trends, analyze competition, and generate ad angles in seconds.",
+    url: "https://ecom-advantage.vercel.app",
+    siteName: "Launchory",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Launchory — Find Winning Products Faster",
+    description: "AI-powered product research platform for Shopify dropshippers.",
+  },
 };
 
 export default function RootLayout({

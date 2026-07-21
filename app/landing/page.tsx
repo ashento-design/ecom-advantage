@@ -1,8 +1,14 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import {
   Rocket, ArrowRight, TrendingUp, Zap, Target, Megaphone,
   DollarSign, Search, Check, Flame, Bookmark, Package,
 } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: 'Find Winning Products Faster',
+  description: 'AI-powered product research for Shopify dropshippers. Discover trends, analyze competition, and generate ad angles in seconds.',
+}
 
 const stats = [
   { value: '15+', label: 'Products Daily' },

@@ -1,5 +1,11 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { Rocket, ArrowLeft } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy',
+  description: "How Launchory collects, uses, and protects your data.",
+}
 
 const sections = [
   {
