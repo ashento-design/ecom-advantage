@@ -3,6 +3,18 @@
 import { useState } from 'react'
 import type { Product, AnalysisResult } from '@/app/types'
 
+const ANALYZE_ERROR_MESSAGES: Record<string, string> = {
+  unauthorized: 'Please sign in to run an AI analysis.',
+  profile_not_found: 'We couldn’t find your account. Try refreshing the page.',
+  invalid_request_body: 'Something went wrong sending that request. Please try again.',
+  analysis_failed: 'The AI analysis failed. Please try again in a moment.',
+}
+
+function friendlyAnalyzeError(code: string | undefined) {
+  if (!code) return 'Analysis failed. Please try again.'
+  return ANALYZE_ERROR_MESSAGES[code] ?? code
+}
+
 export function useProductAnalysis() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
@@ -40,7 +52,7 @@ export function useProductAnalysis() {
         closeModal()
         setShowUpgradeModal(true)
       } else if (!res.ok) {
-        setAnalysisError(data?.error ?? 'Analysis failed. Please try again.')
+        setAnalysisError(friendlyAnalyzeError(data?.error))
       } else {
         setAnalysisResult(data)
       }

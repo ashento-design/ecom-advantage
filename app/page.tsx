@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { TrendingUp, Flame, Star, BarChart3, Clock } from 'lucide-react'
+import { TrendingUp, Flame, Star, BarChart3, Clock, AlertCircle, RotateCw } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { useSavedProducts } from '@/app/lib/useSavedProducts'
 import { useProductAnalysis } from '@/app/lib/useProductAnalysis'
@@ -62,6 +62,8 @@ function sortProducts(products: Product[], sortBy: SortOption) {
 export default function Dashboard() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState(false)
+  const [retryToken, setRetryToken] = useState(0)
   const [filter, setFilter] = useState('All')
   const [sortBy, setSortBy] = useState<SortOption>('demand')
   const [activeTab, setActiveTab] = useState<TabOption>('all')
@@ -91,15 +93,25 @@ export default function Dashboard() {
           .order('demand_score', { ascending: false })
         if (error) {
           console.error('Supabase error:', JSON.stringify(error), error)
+          setFetchError(true)
         } else {
           setProducts(data ?? [])
         }
+      } catch (err) {
+        console.error('Failed to fetch products:', err)
+        setFetchError(true)
       } finally {
         setLoading(false)
       }
     }
     fetchProducts()
-  }, [])
+  }, [retryToken])
+
+  function retryFetchProducts() {
+    setLoading(true)
+    setFetchError(false)
+    setRetryToken((t) => t + 1)
+  }
 
   useEffect(() => {
     const supabase = createBrowserClient()
@@ -302,6 +314,21 @@ export default function Dashboard() {
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <ProductCardSkeleton key={i} />
             ))}
+          </div>
+        ) : fetchError ? (
+          <div className="text-center py-20">
+            <div className="w-12 h-12 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle size={20} className="text-red-400" />
+            </div>
+            <p className="text-white font-semibold mb-1">Couldn&apos;t load products</p>
+            <p className="text-gray-500 text-sm mb-6">Something went wrong fetching the feed.</p>
+            <button
+              onClick={retryFetchProducts}
+              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+            >
+              <RotateCw size={14} />
+              Retry
+            </button>
           </div>
         ) : sorted.length === 0 ? (
           <div className="text-center py-20 text-gray-500">No products found.</div>

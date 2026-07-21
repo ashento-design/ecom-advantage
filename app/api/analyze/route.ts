@@ -27,7 +27,17 @@ export async function POST(request: Request) {
     return Response.json({ error: 'limit_reached', analyses_used: FREE_ANALYSIS_LIMIT }, { status: 403 })
   }
 
-  const { product_id, title, description, niche } = await request.json()
+  let product_id: string | undefined
+  let title: string, description: string, niche: string
+  try {
+    const body = await request.json()
+    product_id = body.product_id
+    title = body.title
+    description = body.description
+    niche = body.niche
+  } catch {
+    return Response.json({ error: 'invalid_request_body' }, { status: 400 })
+  }
 
   const prompt = `You are an expert e-commerce analyst specializing in dropshipping. Analyze this product and return ONLY a JSON object with no markdown.
 
@@ -49,13 +59,18 @@ Return exactly this JSON structure:
   "wow_factor": "<one sentence on what makes this product viral-worthy>"
 }`
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [{ role: 'user', content: prompt }],
-    response_format: { type: 'json_object' },
-  })
-
-  const result = JSON.parse(completion.choices[0].message.content!)
+  let result
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' },
+    })
+    result = JSON.parse(completion.choices[0].message.content!)
+  } catch (err) {
+    console.error('OpenAI analysis failed:', err)
+    return Response.json({ error: 'analysis_failed' }, { status: 502 })
+  }
 
   await supabase
     .from('profiles')
