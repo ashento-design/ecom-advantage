@@ -228,7 +228,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {[
             { label: 'Products today', value: products.length.toString(), icon: <BarChart3 size={16} className="text-indigo-400" />, border: 'border-l-indigo-500' },
             { label: 'Avg demand score', value: products.length ? Math.round(products.reduce((a, b) => a + b.demand_score, 0) / products.length).toString() : '0', icon: <TrendingUp size={16} className="text-green-400" />, border: 'border-l-green-500' },
@@ -260,13 +260,13 @@ export default function Dashboard() {
           ))}
         </div>
 
-        <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
-          <div className="flex gap-2 flex-wrap">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-6">
+          <div className="flex gap-2 overflow-x-auto sm:flex-wrap sm:overflow-visible -mx-4 px-4 sm:mx-0 sm:px-0 pb-1 sm:pb-0">
             {niches.map((niche) => (
               <button
                 key={niche}
                 onClick={() => setFilter(niche)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                className={`shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
                   filter === niche
                     ? 'bg-indigo-600 text-white'
                     : 'bg-gray-900 text-gray-400 border border-gray-800 hover:border-gray-600 hover:text-white'
@@ -280,7 +280,7 @@ export default function Dashboard() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="bg-gray-900 border border-gray-800 text-gray-300 text-sm font-medium rounded-xl px-4 py-2 outline-none focus:border-gray-600 transition-colors"
+            className="shrink-0 bg-gray-900 border border-gray-800 text-gray-300 text-sm font-medium rounded-xl px-4 py-2 outline-none focus:border-gray-600 transition-colors"
           >
             <option value="demand">Sort: Highest Demand</option>
             <option value="newest">Sort: Newest First</option>
