@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'limit_reached', analyses_used: FREE_ANALYSIS_LIMIT }, { status: 403 })
   }
 
-  const { title, description, niche } = await request.json()
+  const { product_id, title, description, niche } = await request.json()
 
   const prompt = `You are an expert e-commerce analyst specializing in dropshipping. Analyze this product and return ONLY a JSON object with no markdown.
 
@@ -57,6 +57,22 @@ Return exactly this JSON structure:
     .from('profiles')
     .update({ analyses_used: profile.analyses_used + 1 })
     .eq('id', user.id)
+
+  if (product_id) {
+    const { error: insertError } = await supabase.from('ai_analyses').insert({
+      user_id: user.id,
+      product_id,
+      demand_score: result.demand_score,
+      competition_level: result.competition_level,
+      suggested_price: result.suggested_price,
+      ad_angles: result.ad_angles,
+      hooks: result.hooks,
+      summary: result.summary,
+    })
+    if (insertError) {
+      console.error('Failed to persist analysis:', insertError.message)
+    }
+  }
 
   return Response.json(result)
 }
