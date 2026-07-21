@@ -5,10 +5,12 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Rocket, Search, Bell, Bookmark, User, LogOut } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
+import { SearchModal } from '@/app/components/SearchModal'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 export function Navbar({ user }: { user: SupabaseUser | null }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
@@ -32,6 +34,7 @@ export function Navbar({ user }: { user: SupabaseUser | null }) {
 
   return (
     <nav className="border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm sticky top-0 z-40">
+      {searchOpen && <SearchModal onClose={() => setSearchOpen(false)} />}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2">
@@ -42,7 +45,10 @@ export function Navbar({ user }: { user: SupabaseUser | null }) {
             <span className="text-xs bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full font-medium ml-1">BETA</span>
           </Link>
           <div className="flex items-center gap-1">
-            <button className="flex items-center gap-2 text-gray-400 hover:text-white px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="flex items-center gap-2 text-gray-400 hover:text-white px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
+            >
               <Search size={16} />
               <span className="hidden sm:inline">Search</span>
             </button>
