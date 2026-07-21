@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Rocket, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react'
+import { Rocket, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
+import { WELCOME_TOAST_KEY } from '@/app/lib/welcomeToast'
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState('')
@@ -13,7 +14,6 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [confirmed, setConfirmed] = useState(false)
   const router = useRouter()
 
   async function handleSubmit(e: React.FormEvent) {
@@ -34,53 +34,37 @@ export default function SignupPage() {
       }
 
       if (data.user) {
-        await supabase.from('profiles').insert({
+        const { error: profileError } = await supabase.from('profiles').insert({
           id: data.user.id,
           email,
           full_name: fullName,
           plan: 'free',
         })
+        if (profileError) {
+          console.error('Failed to create profile row:', profileError.message)
+        }
       }
 
-      if (data.session) {
-        router.push('/')
-        router.refresh()
-      } else {
-        setConfirmed(true)
+      // Email confirmation is disabled on this project, so signUp() should already
+      // return a session — but sign in explicitly as a fallback in case it doesn't.
+      let hasSession = !!data.session
+      if (!hasSession) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+        hasSession = !signInError
       }
+
+      if (!hasSession) {
+        setError('Account created, but automatic sign-in failed. Please sign in below.')
+        router.push('/auth/login')
+        return
+      }
+
+      sessionStorage.setItem(WELCOME_TOAST_KEY, '1')
+      router.push('/')
+      router.refresh()
     } finally {
       setLoading(false)
     }
-  }
-
-  if (confirmed) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
-        <div className="w-full max-w-md">
-          <div className="flex items-center justify-center gap-2 mb-8">
-            <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center">
-              <Rocket size={20} className="text-white" />
-            </div>
-            <span className="font-bold text-white text-xl">Launchory</span>
-          </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 text-center">
-            <div className="w-14 h-14 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-5">
-              <CheckCircle size={28} className="text-green-400" />
-            </div>
-            <h2 className="text-xl font-bold text-white mb-2">Check your email</h2>
-            <p className="text-gray-400 text-sm mb-6">
-              We sent a confirmation link to <span className="text-white font-medium">{email}</span>. Click it to activate your account.
-            </p>
-            <Link
-              href="/auth/login"
-              className="inline-block bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-3 rounded-xl transition-colors"
-            >
-              Back to sign in
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (

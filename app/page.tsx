@@ -13,6 +13,7 @@ import { AnalysisModal } from '@/app/components/AnalysisModal'
 import { UpgradeModal } from '@/app/components/UpgradeModal'
 import { Toast } from '@/app/components/Toast'
 import { OnboardingModal } from '@/app/components/OnboardingModal'
+import { WELCOME_TOAST_KEY, WELCOME_TOAST_MESSAGE } from '@/app/lib/welcomeToast'
 import type { Product } from '@/app/types'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
@@ -119,6 +120,14 @@ export default function Dashboard() {
     })
     return () => subscription.unsubscribe()
   }, [router])
+
+  useEffect(() => {
+    if (sessionStorage.getItem(WELCOME_TOAST_KEY)) {
+      sessionStorage.removeItem(WELCOME_TOAST_KEY)
+      showToast(WELCOME_TOAST_MESSAGE)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     if (!user) return
