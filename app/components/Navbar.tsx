@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Rocket, Search, Bell, Bookmark, User, LogOut } from 'lucide-react'
+import { Rocket, Search, Bell, Bookmark, User, LogOut, ShieldCheck } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { SearchModal } from '@/app/components/SearchModal'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
@@ -11,6 +11,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js'
 export function Navbar({ user }: { user: SupabaseUser | null }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
@@ -23,6 +24,13 @@ export function Navbar({ user }: { user: SupabaseUser | null }) {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  useEffect(() => {
+    if (!user) return
+    fetch('/api/admin/check')
+      .then((res) => setIsAdmin(res.ok))
+      .catch(() => setIsAdmin(false))
+  }, [user])
 
   async function handleSignOut() {
     const supabase = createBrowserClient()
@@ -83,6 +91,16 @@ export function Navbar({ user }: { user: SupabaseUser | null }) {
                       <User size={14} className="text-gray-400" />
                       My Account
                     </Link>
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        className="flex items-center gap-3 px-4 py-3 text-sm text-emerald-400 hover:text-emerald-300 hover:bg-gray-800 transition-colors"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <ShieldCheck size={14} />
+                        Admin Panel
+                      </Link>
+                    )}
                     <button
                       onClick={handleSignOut}
                       className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:text-red-300 hover:bg-gray-800 transition-colors"
