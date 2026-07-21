@@ -24,8 +24,24 @@ function getGreeting() {
 }
 
 type SortOption = 'demand' | 'newest' | 'trending'
+type TabOption = 'all' | 'hot' | 'new' | 'staff'
 
 const trendRank: Record<string, number> = { Hot: 0, Trending: 1, Rising: 2 }
+
+const tabs: { value: TabOption; label: string; defaultSort: SortOption }[] = [
+  { value: 'all', label: 'All Products', defaultSort: 'demand' },
+  { value: 'hot', label: 'Hot This Week', defaultSort: 'demand' },
+  { value: 'new', label: 'New Arrivals', defaultSort: 'newest' },
+  { value: 'staff', label: 'Staff Picks', defaultSort: 'demand' },
+]
+
+function applyTab(products: Product[], tab: TabOption) {
+  const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000
+  if (tab === 'hot') return products.filter((p) => p.trend_label === 'Hot')
+  if (tab === 'new') return products.filter((p) => Date.now() - new Date(p.created_at).getTime() < fourteenDaysMs)
+  if (tab === 'staff') return products.filter((p) => p.is_featured)
+  return products
+}
 
 function sortProducts(products: Product[], sortBy: SortOption) {
   const sorted = [...products]
@@ -47,6 +63,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('All')
   const [sortBy, setSortBy] = useState<SortOption>('demand')
+  const [activeTab, setActiveTab] = useState<TabOption>('all')
 
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
@@ -138,7 +155,13 @@ export default function Dashboard() {
     }
   }
 
-  const filtered = filter === 'All' ? products : products.filter((p) => p.niche === filter)
+  function handleTabClick(tab: TabOption) {
+    setActiveTab(tab)
+    setSortBy(tabs.find((t) => t.value === tab)!.defaultSort)
+  }
+
+  const tabFiltered = applyTab(products, activeTab)
+  const filtered = filter === 'All' ? tabFiltered : tabFiltered.filter((p) => p.niche === filter)
   const sorted = sortProducts(filtered, sortBy)
 
   if (!authChecked) {
@@ -218,6 +241,22 @@ export default function Dashboard() {
               </div>
               <span className="text-white text-2xl font-bold">{stat.value}</span>
             </div>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-6 border-b border-gray-800 mb-6 overflow-x-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => handleTabClick(tab.value)}
+              className={`shrink-0 pb-3 pt-1 text-base font-semibold border-b-2 transition-colors ${
+                activeTab === tab.value
+                  ? 'text-white border-indigo-500'
+                  : 'text-gray-500 border-transparent hover:text-gray-300'
+              }`}
+            >
+              {tab.label}
+            </button>
           ))}
         </div>
 
