@@ -12,6 +12,7 @@ import { ProductCard, ProductCardSkeleton } from '@/app/components/ProductCard'
 import { AnalysisModal } from '@/app/components/AnalysisModal'
 import { UpgradeModal } from '@/app/components/UpgradeModal'
 import { Toast } from '@/app/components/Toast'
+import { OnboardingModal } from '@/app/components/OnboardingModal'
 import type { Product } from '@/app/types'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
@@ -49,6 +50,7 @@ export default function Dashboard() {
 
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const router = useRouter()
 
   const { toastMessage, showToast } = useToast()
@@ -101,6 +103,41 @@ export default function Dashboard() {
     return () => subscription.unsubscribe()
   }, [router])
 
+  useEffect(() => {
+    if (!user) return
+    async function checkOnboarding() {
+      const supabase = createBrowserClient()
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('onboarding_completed')
+        .eq('id', user!.id)
+        .single()
+
+      // Missing column (migration not run yet) or missing row shouldn't block the dashboard.
+      if (error) {
+        console.error('Failed to check onboarding status:', error.message)
+        return
+      }
+      if (data?.onboarding_completed === false) {
+        setShowOnboarding(true)
+      }
+    }
+    checkOnboarding()
+  }, [user])
+
+  async function completeOnboarding() {
+    setShowOnboarding(false)
+    if (!user) return
+    const supabase = createBrowserClient()
+    const { error } = await supabase
+      .from('profiles')
+      .update({ onboarding_completed: true })
+      .eq('id', user.id)
+    if (error) {
+      console.error('Failed to mark onboarding complete:', error.message)
+    }
+  }
+
   const filtered = filter === 'All' ? products : products.filter((p) => p.niche === filter)
   const sorted = sortProducts(filtered, sortBy)
 
@@ -130,6 +167,13 @@ export default function Dashboard() {
           onUpgrade={handleUpgrade}
           upgrading={upgrading}
           error={upgradeError}
+        />
+      )}
+
+      {showOnboarding && (
+        <OnboardingModal
+          niches={niches.filter((n) => n !== 'All')}
+          onComplete={completeOnboarding}
         />
       )}
 
