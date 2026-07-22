@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createBrowserClient } from '@/app/lib/supabase'
-import { AlertCircle, ImageOff } from 'lucide-react'
+import { AlertCircle, ImageOff, Upload } from 'lucide-react'
 
 export type ProductFormValues = {
   title: string
@@ -36,6 +36,9 @@ export function ProductForm({
   const [description, setDescription] = useState(initialValues?.description ?? '')
   const [imageUrl, setImageUrl] = useState(initialValues?.image_url ?? '')
   const [imageError, setImageError] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [supplierUrl, setSupplierUrl] = useState(initialValues?.supplier_url ?? '')
   const [demandScore, setDemandScore] = useState(initialValues?.demand_score ?? 75)
   const [trendLabel, setTrendLabel] = useState(initialValues?.trend_label ?? 'Rising')
@@ -55,6 +58,41 @@ export function ProductForm({
         setNiches(unique)
       })
   }, [])
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    setUploadError(null)
+    try {
+      const imageBase64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = () => reject(reader.error)
+        reader.readAsDataURL(file)
+      })
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64, folder: 'products' }),
+      })
+      const data = await res.json().catch(() => null)
+      if (!res.ok) {
+        setUploadError(data?.error === 'server_misconfigured'
+          ? 'SUPABASE_SERVICE_ROLE_KEY is not set on the server.'
+          : (data?.error ?? 'Upload failed. Please try again.'))
+        return
+      }
+      setImageUrl(data.url)
+      setImageError(false)
+    } catch {
+      setUploadError('Upload failed. Please try again.')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   function handleNicheSelectChange(value: string) {
     if (value === CUSTOM_NICHE) {
@@ -116,14 +154,39 @@ export function ProductForm({
 
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">Image URL</label>
-        <input
-          type="url"
-          value={imageUrl}
-          onChange={(e) => { setImageUrl(e.target.value); setImageError(false) }}
-          required
-          placeholder="https://images.unsplash.com/photo-…?w=400"
-          className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors text-sm mb-3"
-        />
+        <div className="flex gap-2 mb-3">
+          <input
+            type="url"
+            value={imageUrl}
+            onChange={(e) => { setImageUrl(e.target.value); setImageError(false) }}
+            required
+            placeholder="https://images.unsplash.com/photo-…?w=400"
+            className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors text-sm"
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelected}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="shrink-0 inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-3 rounded-xl transition-colors border border-gray-700"
+          >
+            {uploading ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Upload size={15} />
+            )}
+            Upload
+          </button>
+        </div>
+        {uploadError && (
+          <p className="text-red-400 text-xs mb-3">{uploadError}</p>
+        )}
         <div className="w-full h-40 rounded-xl bg-gray-800 border border-gray-700 flex items-center justify-center overflow-hidden">
           {imageUrl && !imageError ? (
             <img
