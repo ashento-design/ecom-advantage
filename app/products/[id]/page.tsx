@@ -104,6 +104,13 @@ export default function ProductDetailPage() {
     load()
   }, [authChecked, productId, user])
 
+  // Separate from the load effect (which re-runs on user changes) so this
+  // fires exactly once per product view, not once per auth state change.
+  useEffect(() => {
+    if (!authChecked || !productId) return
+    fetch(`/api/products/${productId}/view`, { method: 'POST' }).catch(() => {})
+  }, [authChecked, productId])
+
   // A freshly-run analysis takes priority over whatever was already on record.
   const displayedAnalysis = analysisResult ?? existingAnalysis
 

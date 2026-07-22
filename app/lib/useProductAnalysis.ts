@@ -36,6 +36,10 @@ export function useProductAnalysis() {
     setAnalysisResult(null)
     setAnalysisError(null)
     setAnalysisLoading(true)
+
+    // Fire-and-forget — a view-tracking failure should never affect analysis.
+    fetch(`/api/products/${product.id}/view`, { method: 'POST' }).catch(() => {})
+
     try {
       const res = await fetch('/api/analyze', {
         method: 'POST',

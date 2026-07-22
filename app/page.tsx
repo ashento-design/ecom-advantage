@@ -24,7 +24,7 @@ function getGreeting() {
   return 'Good evening'
 }
 
-type SortOption = 'demand' | 'newest' | 'trending'
+type SortOption = 'demand' | 'newest' | 'trending' | 'views'
 type TabOption = 'all' | 'hot' | 'new' | 'staff'
 
 const trendRank: Record<string, number> = { Hot: 0, Trending: 1, Rising: 2 }
@@ -53,6 +53,8 @@ function sortProducts(products: Product[], sortBy: SortOption) {
       const rankDiff = (trendRank[a.trend_label] ?? 3) - (trendRank[b.trend_label] ?? 3)
       return rankDiff !== 0 ? rankDiff : b.demand_score - a.demand_score
     })
+  } else if (sortBy === 'views') {
+    sorted.sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
   } else {
     sorted.sort((a, b) => b.demand_score - a.demand_score)
   }
@@ -307,6 +309,7 @@ export default function Dashboard() {
             <option value="demand">Sort: Highest Demand</option>
             <option value="newest">Sort: Newest First</option>
             <option value="trending">Sort: Trending First</option>
+            <option value="views">Sort: Most Viewed</option>
           </select>
         </div>
 

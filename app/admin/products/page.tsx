@@ -96,6 +96,7 @@ export default function AdminProductsPage() {
                   <th className="px-4 py-3 font-medium">Niche</th>
                   <th className="px-4 py-3 font-medium">Demand</th>
                   <th className="px-4 py-3 font-medium">Trend</th>
+                  <th className="px-4 py-3 font-medium">Views</th>
                   <th className="px-4 py-3 font-medium">Created</th>
                   <th className="px-4 py-3 font-medium text-right">Actions</th>
                 </tr>
@@ -116,6 +117,7 @@ export default function AdminProductsPage() {
                     <td className="px-4 py-3 text-gray-400">{product.niche}</td>
                     <td className="px-4 py-3 text-gray-300 font-semibold">{product.demand_score}</td>
                     <td className="px-4 py-3 text-gray-400">{product.trend_label}</td>
+                    <td className="px-4 py-3 text-gray-400">{product.views ?? 0}</td>
                     <td className="px-4 py-3 text-gray-500">
                       {new Date(product.created_at).toLocaleDateString()}
                     </td>

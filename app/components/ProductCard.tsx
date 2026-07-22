@@ -1,6 +1,7 @@
 import Link from 'next/link'
-import { Flame, TrendingUp, ArrowUp, Bookmark, ExternalLink, Zap } from 'lucide-react'
+import { Flame, TrendingUp, ArrowUp, Bookmark, ExternalLink, Zap, Eye } from 'lucide-react'
 import { ScoreRing } from '@/app/components/ScoreRing'
+import { isTrending } from '@/app/lib/trending'
 import type { Product } from '@/app/types'
 
 const trendConfig: Record<string, { color: string; icon: React.ReactNode }> = {
@@ -51,6 +52,8 @@ export function ProductCard({
   onAnalyze: (p: Product) => void
 }) {
   const trend = trendConfig[product.trend_label] ?? trendConfig['Rising']
+  const views = product.views ?? 0
+  const trending = isTrending(product.demand_score, views)
   return (
     <div className="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-all duration-200 hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5">
       <div className="relative h-64 overflow-hidden bg-gray-800">
@@ -69,6 +72,12 @@ export function ProductCard({
           {isNewProduct(product.created_at) && (
             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-indigo-600 text-white">
               NEW
+            </span>
+          )}
+          {trending && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-orange-500/20 text-orange-400 border border-orange-500/30">
+              <Flame size={12} />
+              Trending
             </span>
           )}
         </div>
@@ -91,7 +100,13 @@ export function ProductCard({
       <div className="p-4">
         <div className="flex items-start justify-between gap-3 mb-2">
           <div className="flex-1">
-            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">{product.niche}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">{product.niche}</span>
+              <span className="inline-flex items-center gap-1 text-xs text-gray-600">
+                <Eye size={11} />
+                {views}
+              </span>
+            </div>
             <Link href={`/products/${product.id}`}>
               <h3 className="text-white font-semibold text-base mt-0.5 leading-snug hover:text-indigo-400 transition-colors">{product.title}</h3>
             </Link>

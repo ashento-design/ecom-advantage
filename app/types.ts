@@ -9,6 +9,7 @@ export type Product = {
   trend_label: string
   is_featured: boolean
   created_at: string
+  views: number
 }
 
 export type AnalysisResult = {
