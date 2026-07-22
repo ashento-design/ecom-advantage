@@ -23,3 +23,17 @@ export type AnalysisResult = {
   seasonality?: string | null
   wow_factor?: string | null
 }
+
+export type AdFormat = 'square' | 'vertical' | 'horizontal'
+export type AdStyle = 'clean' | 'lifestyle' | 'bold' | 'minimalist'
+
+export type GeneratedAd = {
+  id: string
+  user_id: string
+  product_id: string | null
+  ad_angle: string
+  format: AdFormat
+  style: AdStyle
+  image_url: string
+  created_at: string
+}

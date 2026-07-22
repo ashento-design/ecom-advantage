@@ -145,6 +145,7 @@ export default function ProductDetailPage() {
           loading={analysisLoading}
           error={analysisError}
           onClose={closeModal}
+          onAdLimitReached={() => { closeModal(); setShowUpgradeModal(true) }}
         />
       )}
 

@@ -202,6 +202,7 @@ export default function Dashboard() {
           loading={analysisLoading}
           error={analysisError}
           onClose={closeModal}
+          onAdLimitReached={() => { closeModal(); setShowUpgradeModal(true) }}
         />
       )}
 

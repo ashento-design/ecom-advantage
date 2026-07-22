@@ -1,5 +1,6 @@
 import { X, Zap, AlertCircle } from 'lucide-react'
 import { AnalysisResultView } from '@/app/components/AnalysisResultView'
+import { AdGenerator } from '@/app/components/AdGenerator'
 import type { Product, AnalysisResult } from '@/app/types'
 
 export function AnalysisModal({
@@ -8,12 +9,14 @@ export function AnalysisModal({
   loading,
   error,
   onClose,
+  onAdLimitReached,
 }: {
   product: Product
   result: AnalysisResult | null
   loading: boolean
   error: string | null
   onClose: () => void
+  onAdLimitReached: () => void
 }) {
   return (
     <div
@@ -61,7 +64,12 @@ export function AnalysisModal({
             </div>
           )}
 
-          {result && !loading && <AnalysisResultView result={result} />}
+          {result && !loading && (
+            <>
+              <AnalysisResultView result={result} />
+              <AdGenerator product={product} adAngles={result.ad_angles} onLimitReached={onAdLimitReached} />
+            </>
+          )}
         </div>
       </div>
     </div>
