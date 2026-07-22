@@ -1,6 +1,7 @@
 import Stripe from 'stripe'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { sendUpgradeConfirmationEmail } from '@/app/lib/email'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
@@ -24,13 +25,22 @@ export async function POST(request: NextRequest) {
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!
       )
-      const { error } = await supabaseAdmin
+      const { data: updatedProfile, error } = await supabaseAdmin
         .from('profiles')
         .update({ plan: 'pro' })
         .eq('email', email)
+        .select('full_name')
+        .single()
 
       if (error) {
         console.error('Failed to update profile plan:', error.message)
+      } else {
+        const { origin } = new URL(request.url)
+        try {
+          await sendUpgradeConfirmationEmail(email, updatedProfile?.full_name ?? '', origin)
+        } catch (err) {
+          console.error('Failed to send upgrade confirmation email:', err)
+        }
       }
     }
   }

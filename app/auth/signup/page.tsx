@@ -59,6 +59,13 @@ export default function SignupPage() {
         return
       }
 
+      // Fire-and-forget — a failed welcome email should never block signup.
+      fetch('/api/email/welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name: fullName }),
+      }).catch((err) => console.error('Failed to trigger welcome email:', err))
+
       sessionStorage.setItem(WELCOME_TOAST_KEY, '1')
       router.push('/')
       router.refresh()
