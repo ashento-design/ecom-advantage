@@ -2,7 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import {
   Rocket, ArrowRight, TrendingUp, Zap, Target, Megaphone,
-  DollarSign, Search, Check, Flame, Bookmark, Package,
+  DollarSign, Search, Check, Flame, Bookmark, Package, Star,
 } from 'lucide-react'
 
 export const metadata: Metadata = {
@@ -25,6 +25,32 @@ const features = [
   { icon: TrendingUp, title: 'Competition Analysis', description: 'Know how saturated a niche is before you spend a dollar on ads.' },
   { icon: DollarSign, title: 'Pricing Suggestions', description: 'AI-recommended price ranges based on margin and market data.' },
 ]
+
+const testimonials = [
+  {
+    initials: 'JM',
+    name: 'Jake M.',
+    role: 'Shopify store owner',
+    quote: 'Found a winning product in my first week and it did $8k in sales the first month. The AI analysis alone saved me hours of manual research per product.',
+    color: 'bg-indigo-600',
+  },
+  {
+    initials: 'ST',
+    name: 'Sarah T.',
+    role: '7-figure dropshipper',
+    quote: 'I was skeptical about another "winning products" tool, but the ad angle suggestions are genuinely useful — I\'ve used three of them almost word-for-word in live campaigns.',
+    color: 'bg-emerald-600',
+  },
+  {
+    initials: 'DK',
+    name: 'David K.',
+    role: 'Started dropshipping 6 months ago',
+    quote: 'As a beginner, the demand scores and competition breakdown took the guesswork out of picking products. I finally stopped wasting ad spend testing duds.',
+    color: 'bg-orange-600',
+  },
+]
+
+const asSeenOn = ['YouTube', 'TikTok', 'Shopify', 'AliExpress']
 
 const steps = [
   { number: '1', title: 'Find a product', description: 'Browse today’s curated feed of trending Shopify products.' },
@@ -177,6 +203,46 @@ export default function LandingPage() {
               <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Social proof */}
+      <section className="max-w-6xl mx-auto px-6 py-24">
+        <div className="text-center mb-14">
+          <h2 className="text-3xl font-bold text-white mb-3">Trusted by dropshippers worldwide</h2>
+          <p className="text-gray-400">Real results from real stores.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+          {testimonials.map((t) => (
+            <div key={t.name} className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-gray-600 transition-colors">
+              <div className="flex items-center gap-0.5 mb-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
+                ))}
+              </div>
+              <p className="text-gray-300 text-sm leading-relaxed mb-5">&ldquo;{t.quote}&rdquo;</p>
+              <div className="flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-full ${t.color} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
+                  {t.initials}
+                </div>
+                <div>
+                  <p className="text-white text-sm font-semibold">{t.name}</p>
+                  <p className="text-gray-500 text-xs">{t.role}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="text-center">
+          <p className="text-gray-600 text-xs uppercase tracking-wider font-medium mb-5">As seen on</p>
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
+            {asSeenOn.map((brand) => (
+              <span key={brand} className="text-gray-600 text-xl font-bold tracking-tight">
+                {brand}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
 
