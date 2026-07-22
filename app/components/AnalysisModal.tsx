@@ -1,6 +1,7 @@
 import { X, Zap, AlertCircle } from 'lucide-react'
 import { AnalysisResultView } from '@/app/components/AnalysisResultView'
 import { AdGenerator } from '@/app/components/AdGenerator'
+import { SupplierQuickLinks } from '@/app/components/SupplierQuickLinks'
 import type { Product, AnalysisResult } from '@/app/types'
 
 export function AnalysisModal({
@@ -67,6 +68,10 @@ export function AnalysisModal({
           {result && !loading && (
             <>
               <AnalysisResultView result={result} />
+              <div>
+                <p className="text-gray-500 text-xs uppercase tracking-wider font-medium mb-3">Find this product from a supplier</p>
+                <SupplierQuickLinks title={product.title} />
+              </div>
               <AdGenerator product={product} adAngles={result.ad_angles} onLimitReached={onAdLimitReached} />
             </>
           )}

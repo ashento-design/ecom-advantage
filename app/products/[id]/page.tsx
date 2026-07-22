@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, ExternalLink, Zap, Bookmark, Flame, TrendingUp, ArrowUp, AlertCircle } from 'lucide-react'
+import { SupplierQuickLinks } from '@/app/components/SupplierQuickLinks'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { useSavedProducts } from '@/app/lib/useSavedProducts'
 import { useProductAnalysis } from '@/app/lib/useProductAnalysis'
@@ -214,6 +215,11 @@ export default function ProductDetailPage() {
                 <Bookmark size={15} className={saved ? 'fill-indigo-400' : ''} />
                 {saved ? 'Saved' : 'Save Product'}
               </button>
+
+              <div className="w-full border-t border-gray-800 pt-5">
+                <p className="text-gray-500 text-xs uppercase tracking-wider font-medium mb-3">Or search other suppliers</p>
+                <SupplierQuickLinks title={product.title} className="flex flex-col gap-2" />
+              </div>
             </div>
           </div>
         </div>
