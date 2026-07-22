@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Rocket, Search, Bell, Bookmark, User, LogOut, ShieldCheck } from 'lucide-react'
+import { Rocket, Search, Bell, Bookmark, Image as ImageIcon, User, LogOut, ShieldCheck } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { SearchModal } from '@/app/components/SearchModal'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
@@ -70,6 +70,15 @@ export function Navbar({ user }: { user: SupabaseUser | null }) {
               <Bookmark size={16} />
               <span className="hidden sm:inline">Saved</span>
             </Link>
+            {user && (
+              <Link
+                href="/ads"
+                className="flex items-center gap-2 text-gray-400 hover:text-white px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
+              >
+                <ImageIcon size={16} />
+                <span className="hidden sm:inline">My Ads</span>
+              </Link>
+            )}
             {user ? (
               <div className="relative ml-2" ref={menuRef}>
                 <button
