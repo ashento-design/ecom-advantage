@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 
-const BASE_URL = 'https://ecom-advantage.vercel.app'
+const BASE_URL = 'https://launchory.io'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

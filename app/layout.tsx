@@ -5,7 +5,7 @@ import "./globals.css";
 const geist = Geist({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://ecom-advantage.vercel.app"),
+  metadataBase: new URL("https://launchory.io"),
   title: {
     default: "Launchory — Find Winning Products Faster",
     template: "%s — Launchory",
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Launchory — Find Winning Products Faster",
     description: "AI-powered product research platform for Shopify dropshippers. Discover trends, analyze competition, and generate ad angles in seconds.",
-    url: "https://ecom-advantage.vercel.app",
+    url: "https://launchory.io",
     siteName: "Launchory",
     locale: "en_US",
     type: "website",
