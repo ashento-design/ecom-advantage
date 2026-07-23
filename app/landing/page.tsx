@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { PricingSection } from '@/app/components/PricingSection'
 import { ReferralCapture } from '@/app/components/ReferralCapture'
+import { DemoSection } from '@/app/components/DemoSection'
 
 export const metadata: Metadata = {
   title: 'Find Winning Products Faster',
@@ -172,6 +173,8 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      <DemoSection />
 
       {/* Stats bar */}
       <section className="border-y border-gray-800 bg-gray-900">
