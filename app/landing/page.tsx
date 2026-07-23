@@ -5,6 +5,7 @@ import {
   DollarSign, Search, Flame, Bookmark, Package, Star,
 } from 'lucide-react'
 import { PricingSection } from '@/app/components/PricingSection'
+import { ReferralCapture } from '@/app/components/ReferralCapture'
 
 export const metadata: Metadata = {
   title: 'Find Winning Products Faster',
@@ -62,6 +63,7 @@ const steps = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gray-950">
+      <ReferralCapture />
       <nav className="fixed top-0 inset-x-0 z-40 border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex items-center justify-between h-16">

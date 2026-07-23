@@ -14,6 +14,7 @@ import { UpgradeModal } from '@/app/components/UpgradeModal'
 import { Toast } from '@/app/components/Toast'
 import { OnboardingModal } from '@/app/components/OnboardingModal'
 import { WELCOME_TOAST_KEY, WELCOME_TOAST_MESSAGE } from '@/app/lib/welcomeToast'
+import { captureReferralCode } from '@/app/lib/referral'
 import type { Product } from '@/app/types'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
@@ -114,6 +115,10 @@ export default function Dashboard() {
     setFetchError(false)
     setRetryToken((t) => t + 1)
   }
+
+  useEffect(() => {
+    captureReferralCode()
+  }, [])
 
   useEffect(() => {
     const supabase = createBrowserClient()

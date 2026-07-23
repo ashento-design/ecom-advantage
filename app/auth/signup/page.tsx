@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Rocket, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { WELCOME_TOAST_KEY } from '@/app/lib/welcomeToast'
+import { getStoredReferralCode, REFERRAL_CODE_KEY } from '@/app/lib/referral'
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState('')
@@ -34,11 +35,27 @@ export default function SignupPage() {
       }
 
       if (data.user) {
+        let referredBy: string | null = null
+        const storedCode = getStoredReferralCode()
+        if (storedCode) {
+          try {
+            const res = await fetch(`/api/referral/resolve?code=${encodeURIComponent(storedCode)}`)
+            if (res.ok) {
+              const resolved = await res.json()
+              referredBy = resolved.referrerId ?? null
+            }
+          } catch (err) {
+            console.error('Failed to resolve referral code:', err)
+          }
+          localStorage.removeItem(REFERRAL_CODE_KEY)
+        }
+
         const { error: profileError } = await supabase.from('profiles').insert({
           id: data.user.id,
           email,
           full_name: fullName,
           plan: 'free',
+          ...(referredBy ? { referred_by: referredBy } : {}),
         })
         if (profileError) {
           console.error('Failed to create profile row:', profileError.message)
