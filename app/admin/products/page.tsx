@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { useAdminGuard } from '@/app/lib/useAdminGuard'
@@ -106,9 +107,11 @@ export default function AdminProductsPage() {
                   <tr key={product.id} className="border-b border-gray-800/60 last:border-b-0 hover:bg-gray-800/40 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <img
+                        <Image
                           src={product.image_url}
                           alt={product.title}
+                          width={40}
+                          height={40}
                           className="w-10 h-10 rounded-lg object-cover bg-gray-800 shrink-0"
                         />
                         <span className="text-white font-medium truncate max-w-xs">{product.title}</span>

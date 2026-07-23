@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, ExternalLink, Zap, Bookmark, Flame, TrendingUp, ArrowUp, AlertCircle } from 'lucide-react'
 import { SupplierQuickLinks } from '@/app/components/SupplierQuickLinks'
@@ -116,8 +117,26 @@ export default function ProductDetailPage() {
 
   if (!authChecked || loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-gray-950">
+        <Navbar user={user} />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="h-5 w-32 bg-gray-900 rounded mb-6 animate-pulse" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            <div className="lg:col-span-2">
+              <div className="h-80 md:h-[420px] rounded-2xl bg-gray-900 border border-gray-800 mb-5 animate-pulse" />
+              <div className="h-4 w-40 bg-gray-900 rounded mb-3 animate-pulse" />
+              <div className="h-7 w-3/4 bg-gray-900 rounded mb-4 animate-pulse" />
+              <div className="space-y-2">
+                <div className="h-4 w-full bg-gray-900 rounded animate-pulse" />
+                <div className="h-4 w-5/6 bg-gray-900 rounded animate-pulse" />
+              </div>
+            </div>
+            <div className="lg:col-span-1">
+              <div className="h-96 rounded-2xl bg-gray-900 border border-gray-800 animate-pulse" />
+            </div>
+          </div>
+          <div className="h-64 rounded-2xl bg-gray-900 border border-gray-800 animate-pulse" />
+        </div>
       </div>
     )
   }
@@ -182,7 +201,7 @@ export default function ProductDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
           <div className="lg:col-span-2">
             <div className="relative h-80 md:h-[420px] rounded-2xl overflow-hidden bg-gray-900 border border-gray-800 mb-5">
-              <img src={product.image_url} alt={product.title} className="w-full h-full object-cover" />
+              <Image src={product.image_url} alt={product.title} fill sizes="(max-width: 1024px) 100vw, 66vw" className="object-cover" priority />
             </div>
 
             <div className="flex items-center gap-2 mb-3">

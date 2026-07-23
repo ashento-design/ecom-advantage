@@ -13,8 +13,10 @@ import { AnalysisModal } from '@/app/components/AnalysisModal'
 import { UpgradeModal } from '@/app/components/UpgradeModal'
 import { Toast } from '@/app/components/Toast'
 import { OnboardingModal } from '@/app/components/OnboardingModal'
+import { BackToTopButton } from '@/app/components/BackToTopButton'
 import { WELCOME_TOAST_KEY, WELCOME_TOAST_MESSAGE } from '@/app/lib/welcomeToast'
 import { captureReferralCode } from '@/app/lib/referral'
+import { getCachedProducts, setCachedProducts } from '@/app/lib/productCache'
 import type { Product } from '@/app/types'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
@@ -87,6 +89,21 @@ export default function Dashboard() {
   const niches = ['All', ...Array.from(new Set(products.map((p) => p.niche)))]
 
   useEffect(() => {
+    // Skip the network round-trip on a fresh cache hit — the feed rarely
+    // changes minute to minute, so a 5-minute cache avoids re-fetching the
+    // whole product list every time the user navigates back to "/".
+    // An explicit retry (retryToken > 0) always bypasses the cache.
+    if (retryToken === 0) {
+      const cached = getCachedProducts()
+      if (cached) {
+        Promise.resolve().then(() => {
+          setProducts(cached)
+          setLoading(false)
+        })
+        return
+      }
+    }
+
     async function fetchProducts() {
       try {
         const supabase = createBrowserClient()
@@ -99,6 +116,7 @@ export default function Dashboard() {
           setFetchError(true)
         } else {
           setProducts(data ?? [])
+          setCachedProducts(data ?? [])
         }
       } catch (err) {
         console.error('Failed to fetch products:', err)
@@ -230,6 +248,7 @@ export default function Dashboard() {
       )}
 
       <Toast message={toastMessage} />
+      <BackToTopButton />
 
       <Navbar user={user} />
 

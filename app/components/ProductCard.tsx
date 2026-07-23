@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Flame, TrendingUp, ArrowUp, Bookmark, ExternalLink, Zap, Eye } from 'lucide-react'
 import { ScoreRing } from '@/app/components/ScoreRing'
 import { isTrending } from '@/app/lib/trending'
@@ -58,10 +59,12 @@ export function ProductCard({
     <div className="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-all duration-200 hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5">
       <div className="relative h-64 overflow-hidden bg-gray-800">
         <Link href={`/products/${product.id}`} className="absolute inset-0 block">
-          <img
+          <Image
             src={product.image_url}
             alt={product.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </Link>
         <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors duration-200 pointer-events-none">

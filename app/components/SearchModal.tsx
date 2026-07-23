@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Search } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import type { Product } from '@/app/types'
@@ -87,9 +88,11 @@ export function SearchModal({ onClose }: { onClose: () => void }) {
                 onClick={() => goToProduct(p.id)}
                 className="w-full flex items-center gap-3 p-3 hover:bg-gray-800 transition-colors text-left border-b border-gray-800/60 last:border-b-0"
               >
-                <img
+                <Image
                   src={p.image_url}
                   alt={p.title}
+                  width={48}
+                  height={48}
                   className="w-12 h-12 rounded-lg object-cover shrink-0 bg-gray-800"
                 />
                 <div className="flex-1 min-w-0">
