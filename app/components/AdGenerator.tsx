@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Sparkles, Download, RotateCw, AlertCircle } from 'lucide-react'
 import type { Product, AdFormat, AdStyle } from '@/app/types'
 
@@ -16,6 +16,21 @@ const STYLES: { value: AdStyle; label: string }[] = [
   { value: 'bold', label: 'Bold Text Focus' },
   { value: 'minimalist', label: 'Minimalist' },
 ]
+
+const FORMAT_LABEL: Record<AdFormat, string> = {
+  square: 'Square',
+  vertical: 'Vertical',
+  horizontal: 'Horizontal',
+}
+
+const STYLE_LABEL: Record<AdStyle, string> = {
+  clean: 'Clean Product Shot',
+  lifestyle: 'Lifestyle Scene',
+  bold: 'Bold Text Focus',
+  minimalist: 'Minimalist',
+}
+
+const STILL_WORKING_MS = 15_000
 
 const AD_ERROR_MESSAGES: Record<string, string> = {
   unauthorized: 'Please sign in to generate an ad.',
@@ -43,13 +58,23 @@ export function AdGenerator({
   const [format, setFormat] = useState<AdFormat>('square')
   const [style, setStyle] = useState<AdStyle>('clean')
   const [generating, setGenerating] = useState(false)
+  const [stillWorking, setStillWorking] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [generatedAd, setGeneratedAd] = useState<{ image_url: string; persisted?: boolean } | null>(null)
+  const [generatedAd, setGeneratedAd] = useState<{ image_url: string; persisted?: boolean; format: AdFormat; style: AdStyle } | null>(null)
+  const stillWorkingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (stillWorkingTimer.current) clearTimeout(stillWorkingTimer.current)
+    }
+  }, [])
 
   async function handleGenerate() {
     if (!selectedAngle) return
     setGenerating(true)
+    setStillWorking(false)
     setError(null)
+    stillWorkingTimer.current = setTimeout(() => setStillWorking(true), STILL_WORKING_MS)
     try {
       const res = await fetch('/api/generate-ad', {
         method: 'POST',
@@ -72,12 +97,19 @@ export function AdGenerator({
         setError(friendlyAdError(data?.error))
         return
       }
-      setGeneratedAd(data)
+      setGeneratedAd({ ...data, format, style })
     } catch {
       setError('Network error. Please try again.')
     } finally {
       setGenerating(false)
+      setStillWorking(false)
+      if (stillWorkingTimer.current) clearTimeout(stillWorkingTimer.current)
     }
+  }
+
+  function handleGenerateAnother() {
+    setGeneratedAd(null)
+    setError(null)
   }
 
   return (
@@ -89,8 +121,16 @@ export function AdGenerator({
 
       {generatedAd ? (
         <div className="space-y-4">
-          <div className="rounded-xl overflow-hidden border border-gray-700 bg-gray-800">
-            <img src={generatedAd.image_url} alt="Generated ad creative" className="w-full h-auto" />
+          <div className="relative rounded-xl overflow-hidden border border-gray-700 bg-gray-800">
+            <img src={generatedAd.image_url} alt="Generated ad creative" className="w-full h-auto max-h-[520px] object-contain" />
+            <div className="absolute top-3 left-3 flex items-center gap-2">
+              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-950/80 backdrop-blur-sm text-white border border-gray-700">
+                {FORMAT_LABEL[generatedAd.format]}
+              </span>
+              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-600/80 backdrop-blur-sm text-white border border-indigo-500/50">
+                {STYLE_LABEL[generatedAd.style]}
+              </span>
+            </div>
           </div>
           {generatedAd.persisted === false && (
             <div className="flex items-start gap-3 p-3.5 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
@@ -103,27 +143,38 @@ export function AdGenerator({
           <div className="flex gap-2">
             <a
               href={generatedAd.image_url}
-              download
+              download="launchory-ad-creative.png"
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium py-2.5 rounded-xl transition-colors"
             >
               <Download size={14} />
-              Download
+              Download Ad
             </a>
             <button
-              onClick={handleGenerate}
-              disabled={generating}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-white text-sm font-medium py-2.5 rounded-xl transition-colors border border-gray-700"
+              onClick={handleGenerateAnother}
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium py-2.5 rounded-xl transition-colors border border-gray-700"
             >
-              {generating ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <RotateCw size={14} />
-              )}
-              Regenerate
+              <RotateCw size={14} />
+              Generate Another
             </button>
           </div>
+        </div>
+      ) : generating ? (
+        <div className="flex flex-col items-center justify-center gap-4 py-14 px-4 text-center">
+          <div className="relative w-14 h-14">
+            <div className="absolute inset-0 border-4 border-indigo-500/20 rounded-full" />
+            <div className="absolute inset-0 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+          <div>
+            <p className="text-white font-semibold text-sm">Crafting your ad creative…</p>
+            <p className="text-gray-500 text-xs mt-1">This usually takes 10–30 seconds.</p>
+          </div>
+          {stillWorking && (
+            <p className="text-indigo-400 text-xs bg-indigo-500/10 border border-indigo-500/30 rounded-full px-3 py-1.5">
+              Still working, image generation can take up to 30 seconds…
+            </p>
+          )}
         </div>
       ) : (
         <div className="space-y-5">
@@ -190,20 +241,11 @@ export function AdGenerator({
 
           <button
             onClick={handleGenerate}
-            disabled={!selectedAngle || generating}
+            disabled={!selectedAngle}
             className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
           >
-            {generating ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Generating ad… (can take up to 30s)
-              </>
-            ) : (
-              <>
-                <Sparkles size={15} />
-                Generate Ad
-              </>
-            )}
+            <Sparkles size={15} />
+            Generate Ad
           </button>
         </div>
       )}
