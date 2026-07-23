@@ -1,4 +1,5 @@
-import { DollarSign, Target, Megaphone, Users, Share2, Calendar, Sparkles } from 'lucide-react'
+import { useState } from 'react'
+import { DollarSign, Target, Megaphone, Users, Share2, Calendar, Sparkles, Copy, Check } from 'lucide-react'
 import { ScoreRing } from '@/app/components/ScoreRing'
 import type { AnalysisResult } from '@/app/types'
 
@@ -8,12 +9,44 @@ const competitionConfig: Record<string, string> = {
   High: 'bg-red-500/20 text-red-400 border-red-500/30',
 }
 
+function CopyButton({ text, label }: { text: string; label: string }) {
+  const [copied, setCopied] = useState(false)
+
+  async function handleCopy(e: React.MouseEvent) {
+    e.stopPropagation()
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1800)
+    } catch {
+      // clipboard access denied — silently ignore, button just won't confirm
+    }
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="shrink-0 flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-white transition-colors"
+      aria-label={label}
+    >
+      {copied ? (
+        <>
+          <Check size={12} className="text-emerald-400" />
+          <span className="text-emerald-400">Copied!</span>
+        </>
+      ) : (
+        <Copy size={12} />
+      )}
+    </button>
+  )
+}
+
 export function AnalysisResultView({ result }: { result: AnalysisResult }) {
   return (
     <>
       {/* Score + Competition + Price row */}
       <div className="flex items-center gap-6 p-5 bg-gray-800/60 border border-gray-700 rounded-xl">
-        <ScoreRing score={result.demand_score} size="lg" />
+        <ScoreRing score={result.demand_score} size="lg" animate />
         <div className="flex flex-col gap-3">
           <div>
             <span className="text-gray-500 text-xs uppercase tracking-wider font-medium">Competition</span>
@@ -50,7 +83,8 @@ export function AnalysisResultView({ result }: { result: AnalysisResult }) {
               <span className="shrink-0 w-5 h-5 bg-indigo-600/30 text-indigo-400 rounded-md flex items-center justify-center text-xs font-bold border border-indigo-500/30">
                 {i + 1}
               </span>
-              <p className="text-gray-300 text-sm leading-relaxed">{angle}</p>
+              <p className="text-gray-300 text-sm leading-relaxed flex-1">{angle}</p>
+              <CopyButton text={angle} label="Copy angle" />
             </div>
           ))}
         </div>
@@ -68,7 +102,8 @@ export function AnalysisResultView({ result }: { result: AnalysisResult }) {
               <span className="shrink-0 w-5 h-5 bg-orange-600/30 text-orange-400 rounded-md flex items-center justify-center text-xs font-bold border border-orange-500/30">
                 {i + 1}
               </span>
-              <p className="text-gray-300 text-sm leading-relaxed italic">&ldquo;{hook}&rdquo;</p>
+              <p className="text-gray-300 text-sm leading-relaxed italic flex-1">&ldquo;{hook}&rdquo;</p>
+              <CopyButton text={hook} label="Copy hook" />
             </div>
           ))}
         </div>

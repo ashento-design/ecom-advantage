@@ -1,4 +1,7 @@
-import { X, Zap, AlertCircle } from 'lucide-react'
+'use client'
+
+import { useState } from 'react'
+import { X, Zap, AlertCircle, Share2, Check } from 'lucide-react'
 import { AnalysisResultView } from '@/app/components/AnalysisResultView'
 import { AdGenerator } from '@/app/components/AdGenerator'
 import { SupplierQuickLinks } from '@/app/components/SupplierQuickLinks'
@@ -19,6 +22,19 @@ export function AnalysisModal({
   onClose: () => void
   onAdLimitReached: () => void
 }) {
+  const [linkCopied, setLinkCopied] = useState(false)
+
+  async function handleShare() {
+    const url = `${window.location.origin}/products/${product.id}`
+    try {
+      await navigator.clipboard.writeText(url)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    } catch {
+      // clipboard access denied — silently ignore
+    }
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
@@ -35,12 +51,26 @@ export function AnalysisModal({
             <h2 className="text-white font-bold text-lg leading-snug">{product.title}</h2>
             <span className="text-gray-500 text-xs uppercase tracking-wider font-medium">{product.niche}</span>
           </div>
-          <button
-            onClick={onClose}
-            className="shrink-0 w-8 h-8 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors border border-gray-700"
-          >
-            <X size={16} className="text-gray-400" />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleShare}
+              className="w-8 h-8 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors border border-gray-700"
+              aria-label="Copy shareable link"
+              title={linkCopied ? 'Link copied!' : 'Copy shareable link'}
+            >
+              {linkCopied ? (
+                <Check size={16} className="text-emerald-400" />
+              ) : (
+                <Share2 size={16} className="text-gray-400" />
+              )}
+            </button>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center transition-colors border border-gray-700"
+            >
+              <X size={16} className="text-gray-400" />
+            </button>
+          </div>
         </div>
 
         <div className="p-6 pt-5 space-y-6">

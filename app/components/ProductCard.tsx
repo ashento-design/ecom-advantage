@@ -64,6 +64,19 @@ export function ProductCard({
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </Link>
+        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors duration-200 pointer-events-none">
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onAnalyze(product)
+            }}
+            className="opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 transition-all duration-200 pointer-events-auto inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-lg"
+          >
+            <Zap size={14} />
+            Quick Analyze
+          </button>
+        </div>
         <div className="absolute top-3 left-3 flex items-center gap-2 pointer-events-none">
           <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${trend.color}`}>
             {trend.icon}
