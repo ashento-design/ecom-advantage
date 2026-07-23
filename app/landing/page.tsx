@@ -2,8 +2,9 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import {
   Rocket, ArrowRight, TrendingUp, Zap, Target, Megaphone,
-  DollarSign, Search, Check, Flame, Bookmark, Package, Star,
+  DollarSign, Search, Flame, Bookmark, Package, Star,
 } from 'lucide-react'
+import { PricingSection } from '@/app/components/PricingSection'
 
 export const metadata: Metadata = {
   title: 'Find Winning Products Faster',
@@ -269,67 +270,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section className="max-w-6xl mx-auto px-6 py-24">
-        <div className="text-center mb-14">
-          <h2 className="text-3xl font-bold text-white mb-3">Simple, transparent pricing</h2>
-          <p className="text-gray-400">Start free. Upgrade when you&apos;re ready to scale.</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          <div className="h-full flex flex-col bg-gray-900 border border-gray-800 rounded-2xl p-8">
-            <h3 className="text-white font-semibold text-lg mb-1">Free</h3>
-            <div className="flex items-baseline gap-1 mb-6">
-              <span className="text-4xl font-bold text-white">$0</span>
-              <span className="text-gray-500 text-sm">/mo</span>
-            </div>
-            <div className="space-y-3 mb-8">
-              {['3 AI analyses / month', 'Basic product feed'].map((perk) => (
-                <div key={perk} className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-gray-800 flex items-center justify-center shrink-0">
-                    <Check size={10} className="text-gray-400" />
-                  </div>
-                  <span className="text-gray-300 text-sm">{perk}</span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-auto">
-              <Link
-                href="/auth/signup"
-                className="block text-center w-full bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 rounded-xl transition-colors border border-gray-700"
-              >
-                Start for Free
-              </Link>
-            </div>
-          </div>
-
-          <div className="h-full flex flex-col bg-indigo-950 border border-indigo-500/40 rounded-2xl p-8 relative">
-            <span className="absolute -top-3 left-8 bg-indigo-600 text-white text-xs font-semibold px-3 py-1 rounded-full">Most Popular</span>
-            <h3 className="text-white font-semibold text-lg mb-1">Pro</h3>
-            <div className="flex items-baseline gap-1 mb-6">
-              <span className="text-4xl font-bold text-white">$29</span>
-              <span className="text-gray-500 text-sm">/mo</span>
-            </div>
-            <div className="space-y-3 mb-8">
-              {['Unlimited AI analyses', 'Full product feed', 'Breakout alerts', 'Priority support'].map((perk) => (
-                <div key={perk} className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-indigo-600/30 flex items-center justify-center shrink-0">
-                    <Check size={10} className="text-indigo-400" />
-                  </div>
-                  <span className="text-gray-300 text-sm">{perk}</span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-auto">
-              <Link
-                href="/auth/signup"
-                className="block text-center w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-colors"
-              >
-                Upgrade to Pro
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PricingSection />
 
       {/* CTA */}
       <section className="max-w-6xl mx-auto px-6 py-24">
