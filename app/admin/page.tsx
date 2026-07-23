@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Package, Users, Zap, Plus, List } from 'lucide-react'
+import { Package, Users, Zap, Plus, List, DollarSign, Crown, Image as ImageIcon } from 'lucide-react'
 import { useAdminGuard } from '@/app/lib/useAdminGuard'
 import { AdminLayout } from '@/app/components/admin/AdminLayout'
 
@@ -10,6 +10,9 @@ type Stats = {
   totalProducts: number
   totalUsers: number
   totalAnalyses: number
+  totalProUsers: number
+  estimatedMRR: number
+  totalAdsGenerated: number
 }
 
 export default function AdminDashboardPage() {
@@ -50,6 +53,12 @@ export default function AdminDashboardPage() {
     { label: 'Analyses Run', value: stats?.totalAnalyses, icon: Zap },
   ]
 
+  const revenueCards = [
+    { label: 'Pro Users', value: stats?.totalProUsers, icon: Crown, format: (v: number) => v },
+    { label: 'Estimated MRR', value: stats?.estimatedMRR, icon: DollarSign, format: (v: number) => `$${v.toLocaleString()}` },
+    { label: 'Ads Generated', value: stats?.totalAdsGenerated, icon: ImageIcon, format: (v: number) => v },
+  ]
+
   return (
     <AdminLayout user={user}>
       <h1 className="text-2xl font-bold text-white mb-1">Admin Dashboard</h1>
@@ -61,7 +70,7 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
         {cards.map((card) => (
           <div key={card.label} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
             <div className="flex items-center gap-2 mb-2">
@@ -70,6 +79,20 @@ export default function AdminDashboardPage() {
             </div>
             <span className="text-white text-3xl font-bold">
               {loading ? '—' : (card.value ?? 0)}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        {revenueCards.map((card) => (
+          <div key={card.label} className="bg-gray-900 border border-indigo-500/20 rounded-xl p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <card.icon size={16} className="text-indigo-400" />
+              <span className="text-gray-500 text-xs font-medium">{card.label}</span>
+            </div>
+            <span className="text-white text-3xl font-bold">
+              {loading ? '—' : card.format(card.value ?? 0)}
             </span>
           </div>
         ))}

@@ -10,7 +10,9 @@ type AdminUser = {
   full_name: string | null
   plan: string
   analyses_used: number
+  ads_generated: number
   created_at: string
+  last_active: string | null
 }
 
 export default function AdminUsersPage() {
@@ -67,14 +69,16 @@ export default function AdminUsersPage() {
       ) : (
         <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[640px]">
+            <table className="w-full text-sm min-w-[820px]">
               <thead>
                 <tr className="border-b border-gray-800 text-left text-gray-500 text-xs uppercase tracking-wider">
                   <th className="px-4 py-3 font-medium">Name</th>
                   <th className="px-4 py-3 font-medium">Email</th>
                   <th className="px-4 py-3 font-medium">Plan</th>
                   <th className="px-4 py-3 font-medium">Analyses Used</th>
+                  <th className="px-4 py-3 font-medium">Ads Generated</th>
                   <th className="px-4 py-3 font-medium">Joined</th>
+                  <th className="px-4 py-3 font-medium">Last Active</th>
                 </tr>
               </thead>
               <tbody>
@@ -94,7 +98,11 @@ export default function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-300">{u.analyses_used}</td>
+                    <td className="px-4 py-3 text-gray-300">{u.ads_generated ?? 0}</td>
                     <td className="px-4 py-3 text-gray-500">{new Date(u.created_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-gray-500">
+                      {u.last_active ? new Date(u.last_active).toLocaleDateString() : 'Never'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
