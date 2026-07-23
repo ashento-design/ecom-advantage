@@ -22,7 +22,6 @@ const AD_ERROR_MESSAGES: Record<string, string> = {
   profile_not_found: 'We couldn’t find your account. Try refreshing the page.',
   invalid_request_body: 'Something went wrong sending that request. Please try again.',
   ad_generation_failed: 'Ad generation failed. Please try again in a moment.',
-  upload_failed: 'The ad was generated but failed to save. Please try again.',
   server_misconfigured: 'Ad generation is not fully configured yet on the server.',
 }
 
@@ -45,7 +44,7 @@ export function AdGenerator({
   const [style, setStyle] = useState<AdStyle>('clean')
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [generatedAd, setGeneratedAd] = useState<{ image_url: string } | null>(null)
+  const [generatedAd, setGeneratedAd] = useState<{ image_url: string; persisted?: boolean } | null>(null)
 
   async function handleGenerate() {
     if (!selectedAngle) return
@@ -93,6 +92,14 @@ export function AdGenerator({
           <div className="rounded-xl overflow-hidden border border-gray-700 bg-gray-800">
             <img src={generatedAd.image_url} alt="Generated ad creative" className="w-full h-auto" />
           </div>
+          {generatedAd.persisted === false && (
+            <div className="flex items-start gap-3 p-3.5 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+              <AlertCircle size={16} className="text-yellow-400 mt-0.5 shrink-0" />
+              <p className="text-yellow-400 text-sm">
+                This image wasn&apos;t saved to your account — download it now, since it won&apos;t appear in My Ads later.
+              </p>
+            </div>
+          )}
           <div className="flex gap-2">
             <a
               href={generatedAd.image_url}
