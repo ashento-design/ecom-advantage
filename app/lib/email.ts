@@ -1,6 +1,6 @@
 import { Resend } from 'resend'
 
-const FROM_ADDRESS = 'Launchory <onboarding@resend.dev>'
+const FROM_ADDRESS = 'Launchory <hello@launchory.io>'
 
 function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY
