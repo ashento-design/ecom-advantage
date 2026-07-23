@@ -10,6 +10,7 @@ export type Product = {
   is_featured: boolean
   created_at: string
   views: number
+  saves_count: number
 }
 
 export type AnalysisResult = {

@@ -10,6 +10,7 @@ import { createBrowserClient } from '@/app/lib/supabase'
 import { useSavedProducts } from '@/app/lib/useSavedProducts'
 import { useProductAnalysis } from '@/app/lib/useProductAnalysis'
 import { useToast } from '@/app/lib/useToast'
+import { computeLaunchoryScore } from '@/app/lib/launchoryScore'
 import { Navbar } from '@/app/components/Navbar'
 import { ProductCard } from '@/app/components/ProductCard'
 import { ScoreRing } from '@/app/components/ScoreRing'
@@ -162,6 +163,7 @@ export default function ProductDetailPage() {
 
   const trend = trendConfig[product.trend_label] ?? trendConfig['Rising']
   const saved = savedIds.has(product.id)
+  const launchoryScore = computeLaunchoryScore(product)
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -218,7 +220,27 @@ export default function ProductDetailPage() {
 
           <div className="lg:col-span-1">
             <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 flex flex-col items-center text-center gap-5 lg:sticky lg:top-24">
-              <ScoreRing score={product.demand_score} size="xl" />
+              <div>
+                <ScoreRing score={launchoryScore.score} size="xl" label="Launchory Score" />
+                <p className="text-white text-sm font-semibold mt-2">{launchoryScore.label}</p>
+              </div>
+
+              <div className="w-full border-t border-gray-800 pt-4 text-left space-y-2">
+                <p className="text-gray-500 text-xs uppercase tracking-wider font-medium mb-2">Score breakdown</p>
+                {[
+                  { label: 'Demand', points: launchoryScore.demandPoints, of: 40 },
+                  { label: 'Views', points: launchoryScore.viewsPoints, of: 30 },
+                  { label: 'Saves', points: launchoryScore.savesPoints, of: 20 },
+                  { label: 'Trend bonus', points: launchoryScore.trendPoints, of: 10 },
+                ].map((row) => (
+                  <div key={row.label} className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400">{row.label}</span>
+                    <span className="text-gray-300 font-medium">
+                      +{Math.round(row.points)} <span className="text-gray-600">/ {row.of}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
 
               <a
                 href={product.supplier_url}

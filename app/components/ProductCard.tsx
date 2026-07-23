@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { Flame, TrendingUp, ArrowUp, Bookmark, ExternalLink, Zap, Eye } from 'lucide-react'
 import { ScoreRing } from '@/app/components/ScoreRing'
 import { isTrending } from '@/app/lib/trending'
+import { computeLaunchoryScore } from '@/app/lib/launchoryScore'
 import type { Product } from '@/app/types'
 
 const trendConfig: Record<string, { color: string; icon: React.ReactNode }> = {
@@ -55,6 +56,7 @@ export function ProductCard({
   const trend = trendConfig[product.trend_label] ?? trendConfig['Rising']
   const views = product.views ?? 0
   const trending = isTrending(product.demand_score, views)
+  const launchoryScore = computeLaunchoryScore(product)
   return (
     <div className="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-all duration-200 hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5">
       <div className="relative h-64 overflow-hidden bg-gray-800">
@@ -127,8 +129,11 @@ export function ProductCard({
               <h3 className="text-white font-semibold text-base mt-0.5 leading-snug hover:text-indigo-400 transition-colors">{product.title}</h3>
             </Link>
           </div>
-          <ScoreRing score={product.demand_score} />
+          <ScoreRing score={launchoryScore.score} label="Launchory" />
         </div>
+        <span className="inline-flex items-center text-xs font-medium text-gray-400 mb-3">
+          {launchoryScore.label}
+        </span>
         <p className="text-gray-400 text-sm leading-relaxed mb-4 line-clamp-2">{product.description}</p>
         <div className="flex gap-2">
           <button

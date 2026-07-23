@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-export function ScoreRing({ score, size = 'sm', animate = false }: { score: number; size?: 'sm' | 'lg' | 'xl'; animate?: boolean }) {
+export function ScoreRing({ score, size = 'sm', animate = false, label = 'demand' }: { score: number; size?: 'sm' | 'lg' | 'xl'; animate?: boolean; label?: string }) {
   const [animatedScore, setAnimatedScore] = useState(0)
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export function ScoreRing({ score, size = 'sm', animate = false }: { score: numb
           <span className={`${textSize} font-bold text-white`}>{displayScore}</span>
         </div>
       </div>
-      <span className="text-xs text-gray-500">demand</span>
+      <span className="text-xs text-gray-500">{label}</span>
     </div>
   )
 }

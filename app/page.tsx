@@ -17,6 +17,7 @@ import { BackToTopButton } from '@/app/components/BackToTopButton'
 import { WELCOME_TOAST_KEY, WELCOME_TOAST_MESSAGE } from '@/app/lib/welcomeToast'
 import { captureReferralCode } from '@/app/lib/referral'
 import { getCachedProducts, setCachedProducts } from '@/app/lib/productCache'
+import { computeLaunchoryScore } from '@/app/lib/launchoryScore'
 import type { Product } from '@/app/types'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
@@ -27,7 +28,7 @@ function getGreeting() {
   return 'Good evening'
 }
 
-type SortOption = 'demand' | 'newest' | 'trending' | 'views'
+type SortOption = 'demand' | 'newest' | 'trending' | 'views' | 'launchory'
 type TabOption = 'all' | 'hot' | 'new' | 'staff'
 
 const trendRank: Record<string, number> = { Hot: 0, Trending: 1, Rising: 2 }
@@ -58,6 +59,8 @@ function sortProducts(products: Product[], sortBy: SortOption) {
     })
   } else if (sortBy === 'views') {
     sorted.sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
+  } else if (sortBy === 'launchory') {
+    sorted.sort((a, b) => computeLaunchoryScore(b).score - computeLaunchoryScore(a).score)
   } else {
     sorted.sort((a, b) => b.demand_score - a.demand_score)
   }
@@ -331,6 +334,7 @@ export default function Dashboard() {
             className="shrink-0 bg-gray-900 border border-gray-800 text-gray-300 text-sm font-medium rounded-xl px-4 py-2 outline-none focus:border-gray-600 transition-colors"
           >
             <option value="demand">Sort: Highest Demand</option>
+            <option value="launchory">Sort: Launchory Score</option>
             <option value="newest">Sort: Newest First</option>
             <option value="trending">Sort: Trending First</option>
             <option value="views">Sort: Most Viewed</option>
