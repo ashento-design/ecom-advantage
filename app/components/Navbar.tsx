@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Rocket, Search, Bell, Bookmark, Image as ImageIcon, User, LogOut, ShieldCheck, Gift } from 'lucide-react'
+import { Rocket, Search, Bell, Bookmark, Image as ImageIcon, User, LogOut, ShieldCheck, Gift, Sparkles } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { SearchModal } from '@/app/components/SearchModal'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
@@ -107,6 +107,14 @@ export function Navbar({ user }: { user: SupabaseUser | null }) {
                     >
                       <Gift size={14} className="text-gray-400" />
                       Refer & Earn
+                    </Link>
+                    <Link
+                      href="/changelog"
+                      className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      <Sparkles size={14} className="text-gray-400" />
+                      Changelog
                     </Link>
                     {isAdmin && (
                       <Link
