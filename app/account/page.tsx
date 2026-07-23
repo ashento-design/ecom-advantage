@@ -3,17 +3,25 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Zap, CheckCircle, Check, User } from 'lucide-react'
+import { ArrowLeft, Zap, CheckCircle, Check, User, Mail, Lock } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { Navbar } from '@/app/components/Navbar'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
+
+type EmailPreferences = {
+  weekly_digest: boolean
+  breakout_alerts: boolean
+}
 
 type Profile = {
   email: string
   full_name: string | null
   plan: string
   analyses_used: number
+  email_preferences: EmailPreferences | null
 }
+
+const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = { weekly_digest: true, breakout_alerts: false }
 
 const FREE_ANALYSIS_LIMIT = 3
 
@@ -37,7 +45,7 @@ export default function AccountPage() {
 
       const { data } = await supabase
         .from('profiles')
-        .select('email, full_name, plan, analyses_used')
+        .select('email, full_name, plan, analyses_used, email_preferences')
         .eq('id', authUser.id)
         .single()
 
@@ -46,6 +54,25 @@ export default function AccountPage() {
     }
     load()
   }, [router])
+
+  async function handleTogglePreference(key: keyof EmailPreferences) {
+    if (!user || !profile) return
+    const current = profile.email_preferences ?? DEFAULT_EMAIL_PREFERENCES
+    const next = { ...current, [key]: !current[key] }
+
+    setProfile({ ...profile, email_preferences: next })
+
+    const supabase = createBrowserClient()
+    const { error } = await supabase
+      .from('profiles')
+      .update({ email_preferences: next })
+      .eq('id', user.id)
+
+    if (error) {
+      console.error('Failed to update email preferences:', error.message)
+      setProfile({ ...profile, email_preferences: current })
+    }
+  }
 
   async function handleUpgrade() {
     setUpgrading(true)
@@ -63,6 +90,7 @@ export default function AccountPage() {
   const isPro = profile?.plan === 'pro'
   const analysesUsed = profile?.analyses_used ?? 0
   const usagePct = Math.min(100, Math.round((analysesUsed / FREE_ANALYSIS_LIMIT) * 100))
+  const emailPreferences = profile?.email_preferences ?? DEFAULT_EMAIL_PREFERENCES
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -130,6 +158,53 @@ export default function AccountPage() {
                     />
                   </div>
                 )}
+              </div>
+            </div>
+
+            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-5">
+                <Mail size={16} className="text-indigo-400" />
+                <h3 className="text-white font-semibold text-base">Email Preferences</h3>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-4 bg-gray-800/60 border border-gray-700 rounded-xl px-4 py-3">
+                  <div>
+                    <p className="text-white text-sm font-medium">Weekly Digest</p>
+                    <p className="text-gray-500 text-xs">Top 5 winning products, every week</p>
+                  </div>
+                  <button
+                    onClick={() => handleTogglePreference('weekly_digest')}
+                    className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${emailPreferences.weekly_digest ? 'bg-indigo-600' : 'bg-gray-700'}`}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${emailPreferences.weekly_digest ? 'translate-x-5' : ''}`}
+                    />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 bg-gray-800/60 border border-gray-700 rounded-xl px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <div>
+                      <p className="text-white text-sm font-medium flex items-center gap-1.5">
+                        Breakout Alerts
+                        {!isPro && <Lock size={11} className="text-gray-500" />}
+                      </p>
+                      <p className="text-gray-500 text-xs">
+                        {isPro ? 'Get notified when a product view count spikes' : 'Pro only — upgrade to unlock'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => isPro && handleTogglePreference('breakout_alerts')}
+                    disabled={!isPro}
+                    className={`relative w-11 h-6 rounded-full transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed ${emailPreferences.breakout_alerts && isPro ? 'bg-indigo-600' : 'bg-gray-700'}`}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${emailPreferences.breakout_alerts && isPro ? 'translate-x-5' : ''}`}
+                    />
+                  </button>
+                </div>
               </div>
             </div>
 

@@ -51,6 +51,15 @@ function emailShell(bodyHtml: string) {
 </html>`
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function button(label: string, url: string) {
   return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;">
     <tr>
@@ -112,6 +121,76 @@ export async function sendUpgradeConfirmationEmail(to: string, name: string, das
     from: FROM_ADDRESS,
     to,
     subject: "You're on Launchory Pro 🎉",
+    html,
+  })
+}
+
+type DigestProduct = { id: string; title: string; image_url: string; demand_score: number }
+
+export async function sendWeeklyDigestEmail(to: string, name: string, products: DigestProduct[], dashboardUrl: string) {
+  const resend = getResendClient()
+  const firstName = name?.split(' ')[0] || 'there'
+
+  const rows = products.map((p) => `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px; background-color:#1f2937; border-radius:12px; overflow:hidden;">
+      <tr>
+        <td style="width:88px; padding:12px;">
+          <img src="${p.image_url}" width="72" height="72" alt="${escapeHtml(p.title)}" style="border-radius:8px; object-fit:cover; display:block;" />
+        </td>
+        <td style="padding:12px 16px 12px 0; vertical-align:middle;">
+          <p style="margin:0 0 4px 0; color:#ffffff; font-size:14px; font-weight:600;">${escapeHtml(p.title)}</p>
+          <p style="margin:0 0 8px 0; color:#9ca3af; font-size:12px;">Demand score: <strong style="color:#818cf8;">${p.demand_score}</strong></p>
+          <a href="${dashboardUrl}/products/${p.id}" style="display:inline-block; color:#818cf8; font-size:12px; font-weight:600; text-decoration:none;">Analyze Now &rarr;</a>
+        </td>
+      </tr>
+    </table>
+  `).join('')
+
+  const html = emailShell(`
+    <h1 style="color:#ffffff; font-size:20px; margin:0 0 4px 0;">This week&apos;s top 5 winners</h1>
+    <p style="margin:0 0 20px 0;">Hey ${firstName}, here&apos;s what&apos;s trending on Launchory this week.</p>
+    ${rows}
+    ${button('See Full Feed', dashboardUrl)}
+  `)
+
+  return resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "🔥 This Week's Top 5 Winning Products",
+    html,
+  })
+}
+
+type BreakoutProduct = { id: string; title: string; image_url: string; views: number }
+
+export async function sendBreakoutAlertEmail(to: string, name: string, product: BreakoutProduct, dashboardUrl: string) {
+  const resend = getResendClient()
+  const firstName = name?.split(' ')[0] || 'there'
+
+  const html = emailShell(`
+    <h1 style="color:#ffffff; font-size:20px; margin:0 0 12px 0;">🚨 Breakout Product Alert</h1>
+    <p style="margin:0 0 16px 0;">Hey ${firstName}, a product in the feed is spiking right now:</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px; background-color:#1f2937; border-radius:12px; overflow:hidden;">
+      <tr>
+        <td style="width:96px; padding:12px;">
+          <img src="${product.image_url}" width="80" height="80" alt="${escapeHtml(product.title)}" style="border-radius:8px; object-fit:cover; display:block;" />
+        </td>
+        <td style="padding:12px 16px 12px 0; vertical-align:middle;">
+          <p style="margin:0 0 4px 0; color:#ffffff; font-size:15px; font-weight:700;">${escapeHtml(product.title)}</p>
+          <p style="margin:0; color:#f97316; font-size:13px; font-weight:600;">${product.views}+ views and climbing</p>
+        </td>
+      </tr>
+    </table>
+    <p style="margin:0 0 16px 0; color:#9ca3af; font-size:13px;">
+      Products that spike like this often become winners before they get saturated. Get in early.
+    </p>
+    ${button('Analyze This Product', `${dashboardUrl}/products/${product.id}`)}
+  `)
+
+  return resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: '🚨 Breakout Product Alert',
     html,
   })
 }
