@@ -2,8 +2,9 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import {
   Rocket, ArrowLeft, Sparkles, Puzzle, TrendingUp, Zap, Video,
-  Eye, ShoppingCart, Smartphone, Users, Lock,
+  ShoppingCart, Smartphone, Users, Lock,
 } from 'lucide-react'
+import { StoreIntelligenceChangelogEntry } from '@/app/components/StoreIntelligenceChangelogEntry'
 
 export const metadata: Metadata = {
   title: 'Changelog',
@@ -60,7 +61,6 @@ const comingSoon = [
   { icon: TrendingUp, title: 'TikTok Trend Integration', description: 'Spot viral products before they peak.' },
   { icon: Zap, title: 'Automated Product Discovery', description: 'AI finds new winners daily.' },
   { icon: Video, title: 'Video Ad Generator', description: 'Create video ads, not just images.' },
-  { icon: Eye, title: 'Competitor Store Tracker', description: 'Spy on successful Shopify stores.' },
   { icon: ShoppingCart, title: 'One-Click Product Import', description: 'Import to your Shopify store instantly.' },
   { icon: Smartphone, title: 'Mobile App', description: 'Launchory on iOS and Android.' },
   { icon: Users, title: 'Affiliate Program', description: 'Earn 30% recurring commission.' },
@@ -141,6 +141,7 @@ export default function ChangelogPage() {
             <h2 className="text-white font-bold text-lg">Coming soon</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <StoreIntelligenceChangelogEntry />
             {comingSoon.map((feature) => (
               <div
                 key={feature.title}

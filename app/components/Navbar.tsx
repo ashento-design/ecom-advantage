@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Rocket, Search, Bookmark, Image as ImageIcon, User, LogOut, ShieldCheck, Gift, Sparkles, PackagePlus } from 'lucide-react'
+import { Rocket, Search, Bookmark, Image as ImageIcon, User, LogOut, ShieldCheck, Gift, Sparkles, PackagePlus, LineChart } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { SearchModal } from '@/app/components/SearchModal'
 import { NotificationsDropdown } from '@/app/components/NotificationsDropdown'
@@ -13,6 +13,7 @@ export function Navbar({ user }: { user: SupabaseUser | null }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isPro, setIsPro] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
@@ -31,6 +32,14 @@ export function Navbar({ user }: { user: SupabaseUser | null }) {
     fetch('/api/admin/check')
       .then((res) => setIsAdmin(res.ok))
       .catch(() => setIsAdmin(false))
+
+    const supabase = createBrowserClient()
+    supabase
+      .from('profiles')
+      .select('plan')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => setIsPro(data?.plan === 'pro'))
   }, [user])
 
   async function handleSignOut() {
@@ -123,6 +132,16 @@ export function Navbar({ user }: { user: SupabaseUser | null }) {
                       <PackagePlus size={14} className="text-gray-400" />
                       Request a Product
                     </Link>
+                    {isPro && (
+                      <Link
+                        href="/store-intelligence"
+                        className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <LineChart size={14} className="text-gray-400" />
+                        Store Intelligence
+                      </Link>
+                    )}
                     {isAdmin && (
                       <Link
                         href="/admin"
