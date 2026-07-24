@@ -17,7 +17,7 @@ const tips = [
   { icon: Bookmark, title: 'Save products to your board', description: 'Bookmark winners to revisit them anytime from Saved.' },
 ]
 
-export function OnboardingModal({ niches, onComplete }: { niches: string[]; onComplete: () => void }) {
+export function OnboardingModal({ niches, onComplete }: { niches: string[]; onComplete: (selectedNiches: string[]) => void }) {
   const [step, setStep] = useState(1)
   const [experience, setExperience] = useState<Experience | null>(null)
   const [selectedNiches, setSelectedNiches] = useState<Set<string>>(new Set())
@@ -159,7 +159,7 @@ export function OnboardingModal({ niches, onComplete }: { niches: string[]; onCo
               </div>
 
               <button
-                onClick={onComplete}
+                onClick={() => onComplete(Array.from(selectedNiches))}
                 className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-colors"
               >
                 Get Started

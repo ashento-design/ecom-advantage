@@ -4,6 +4,7 @@ import { Flame, TrendingUp, ArrowUp, Bookmark, ExternalLink, Zap, Eye } from 'lu
 import { ScoreRing } from '@/app/components/ScoreRing'
 import { isTrending } from '@/app/lib/trending'
 import { computeLaunchoryScore } from '@/app/lib/launchoryScore'
+import { recordRecentlyViewed } from '@/app/lib/recentlyViewed'
 import type { Product } from '@/app/types'
 
 const trendConfig: Record<string, { color: string; icon: React.ReactNode }> = {
@@ -57,10 +58,15 @@ export function ProductCard({
   const views = product.views ?? 0
   const trending = isTrending(product.demand_score, views)
   const launchoryScore = computeLaunchoryScore(product)
+
+  function handleViewProduct() {
+    recordRecentlyViewed({ id: product.id, title: product.title, image_url: product.image_url, niche: product.niche })
+  }
+
   return (
     <div className="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-all duration-200 hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5">
       <div className="relative h-64 overflow-hidden bg-gray-800">
-        <Link href={`/products/${product.id}`} className="absolute inset-0 block">
+        <Link href={`/products/${product.id}`} onClick={handleViewProduct} className="absolute inset-0 block">
           <Image
             src={product.image_url}
             alt={product.title}
@@ -125,7 +131,7 @@ export function ProductCard({
                 {views}
               </span>
             </div>
-            <Link href={`/products/${product.id}`}>
+            <Link href={`/products/${product.id}`} onClick={handleViewProduct}>
               <h3 className="text-white font-semibold text-base mt-0.5 leading-snug hover:text-indigo-400 transition-colors">{product.title}</h3>
             </Link>
           </div>

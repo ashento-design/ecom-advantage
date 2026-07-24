@@ -18,6 +18,9 @@ import { WELCOME_TOAST_KEY, WELCOME_TOAST_MESSAGE } from '@/app/lib/welcomeToast
 import { captureReferralCode } from '@/app/lib/referral'
 import { getCachedProducts, setCachedProducts } from '@/app/lib/productCache'
 import { computeLaunchoryScore } from '@/app/lib/launchoryScore'
+import { getRecentlyViewed, type RecentlyViewedProduct } from '@/app/lib/recentlyViewed'
+import { RecentlyViewedRow } from '@/app/components/RecentlyViewedRow'
+import { ProTipCard } from '@/app/components/ProTipCard'
 import type { Product } from '@/app/types'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
@@ -32,6 +35,7 @@ type SortOption = 'demand' | 'newest' | 'trending' | 'views' | 'launchory'
 type TabOption = 'all' | 'hot' | 'new' | 'staff'
 
 const trendRank: Record<string, number> = { Hot: 0, Trending: 1, Rising: 2 }
+const PRO_TIP_DISMISSED_KEY = 'launchory_pro_tip_dismissed'
 
 const tabs: { value: TabOption; label: string; defaultSort: SortOption }[] = [
   { value: 'all', label: 'All Products', defaultSort: 'demand' },
@@ -79,6 +83,10 @@ export default function Dashboard() {
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [profilePlan, setProfilePlan] = useState<string | null>(null)
+  const [preferredNiches, setPreferredNiches] = useState<string[]>([])
+  const [recentlyViewed, setRecentlyViewed] = useState<RecentlyViewedProduct[]>([])
+  const [proTipDismissed, setProTipDismissed] = useState(true)
   const router = useRouter()
 
   const { toastMessage, showToast } = useToast()
@@ -89,7 +97,12 @@ export default function Dashboard() {
     analyzeProduct, closeModal, setShowUpgradeModal, handleUpgrade,
   } = useProductAnalysis()
 
-  const niches = ['All', ...Array.from(new Set(products.map((p) => p.niche)))]
+  const allNiches = Array.from(new Set(products.map((p) => p.niche)))
+  const orderedNiches = [
+    ...allNiches.filter((n) => preferredNiches.includes(n)),
+    ...allNiches.filter((n) => !preferredNiches.includes(n)),
+  ]
+  const niches = ['All', ...orderedNiches]
 
   useEffect(() => {
     // Skip the network round-trip on a fresh cache hit — the feed rarely
@@ -142,6 +155,18 @@ export default function Dashboard() {
   }, [])
 
   useEffect(() => {
+    Promise.resolve().then(() => {
+      setRecentlyViewed(getRecentlyViewed())
+      setProTipDismissed(localStorage.getItem(PRO_TIP_DISMISSED_KEY) === '1')
+    })
+  }, [])
+
+  function dismissProTip() {
+    setProTipDismissed(true)
+    localStorage.setItem(PRO_TIP_DISMISSED_KEY, '1')
+  }
+
+  useEffect(() => {
     const supabase = createBrowserClient()
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) {
@@ -175,7 +200,7 @@ export default function Dashboard() {
       const supabase = createBrowserClient()
       const { data, error } = await supabase
         .from('profiles')
-        .select('onboarding_completed')
+        .select('onboarding_completed, plan, preferred_niches')
         .eq('id', user!.id)
         .single()
 
@@ -187,17 +212,20 @@ export default function Dashboard() {
       if (data?.onboarding_completed === false) {
         setShowOnboarding(true)
       }
+      setProfilePlan(data?.plan ?? 'free')
+      setPreferredNiches(data?.preferred_niches ?? [])
     }
     checkOnboarding()
   }, [user])
 
-  async function completeOnboarding() {
+  async function completeOnboarding(selectedNiches: string[]) {
     setShowOnboarding(false)
+    setPreferredNiches(selectedNiches)
     if (!user) return
     const supabase = createBrowserClient()
     const { error } = await supabase
       .from('profiles')
-      .update({ onboarding_completed: true })
+      .update({ onboarding_completed: true, preferred_niches: selectedNiches })
       .eq('id', user.id)
     if (error) {
       console.error('Failed to mark onboarding complete:', error.message)
@@ -212,6 +240,17 @@ export default function Dashboard() {
   const tabFiltered = applyTab(products, activeTab)
   const filtered = filter === 'All' ? tabFiltered : tabFiltered.filter((p) => p.niche === filter)
   const sorted = sortProducts(filtered, sortBy)
+
+  const recommendedProducts = preferredNiches.length > 0
+    ? [...products]
+      .filter((p) => preferredNiches.includes(p.niche))
+      .sort((a, b) => computeLaunchoryScore(b).score - computeLaunchoryScore(a).score)
+      .slice(0, 3)
+    : []
+
+  const trendingProduct = products.length > 0
+    ? [...products].sort((a, b) => computeLaunchoryScore(b).score - computeLaunchoryScore(a).score)[0]
+    : null
 
   if (!authChecked) {
     return (
@@ -264,6 +303,24 @@ export default function Dashboard() {
           </div>
         )}
 
+        {trendingProduct && (
+          <button
+            onClick={() => analyzeProduct(trendingProduct)}
+            className="w-full flex items-center gap-3 mb-6 bg-gradient-to-r from-orange-600/15 to-transparent border border-orange-500/30 rounded-2xl px-5 py-4 text-left hover:border-orange-500/50 transition-colors"
+          >
+            <Flame size={18} className="text-orange-400 shrink-0" />
+            <p className="text-white text-sm">
+              <span className="font-semibold">🔥 Trending Now:</span>{' '}
+              <span className="text-gray-300">{trendingProduct.title}</span>
+              <span className="text-orange-400 font-semibold"> — today&apos;s highest Launchory Score</span>
+            </p>
+          </button>
+        )}
+
+        {user && profilePlan === 'free' && !proTipDismissed && (
+          <ProTipCard onDismiss={dismissProTip} />
+        )}
+
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">
             <Star size={16} className="text-indigo-400" />
@@ -294,6 +351,28 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
+
+        {recommendedProducts.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-3">
+              <Star size={15} className="text-indigo-400" />
+              <span className="text-white font-semibold text-sm">Recommended for you</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {recommendedProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  saved={savedIds.has(product.id)}
+                  onToggleSave={toggleSave}
+                  onAnalyze={analyzeProduct}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <RecentlyViewedRow products={recentlyViewed} />
 
         <div className="flex items-center gap-6 border-b border-gray-800 mb-6 overflow-x-auto">
           {tabs.map((tab) => (
