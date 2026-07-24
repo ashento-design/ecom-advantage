@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { NavigationProgressBar } from "@/app/components/NavigationProgressBar";
 import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"] });
@@ -34,6 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geist.className} bg-gray-950 text-white antialiased`}>
+        <NavigationProgressBar />
         {children}
       </body>
     </html>
