@@ -165,7 +165,7 @@ export function PricingSection() {
           </div>
           <p className="text-gray-500 text-xs mb-1">{annual ? 'billed annually ($228/year)' : 'billed monthly'}</p>
           <p className="text-orange-400 text-xs font-medium mb-6">
-            Beta pricing ends October 2025 — locks in at $29/mo forever
+            Beta pricing ends October 2026 — locks in at $29/mo forever
           </p>
           <div className="space-y-3 mb-6">
             {proFeatures.map((f) => (

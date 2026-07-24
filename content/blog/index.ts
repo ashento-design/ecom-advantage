@@ -1,6 +1,6 @@
 import product10 from './10-winning-dropshipping-products-to-test-this-month.json'
 import findEarly from './how-to-find-winning-products-before-they-go-viral.json'
-import completeGuide from './complete-guide-to-dropshipping-product-research-2025.json'
+import completeGuide from './complete-guide-to-dropshipping-product-research-2026.json'
 
 export type BlogBlock =
   | { type: 'p'; text: string }

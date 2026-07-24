@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 const releases = [
   {
     version: '0.8',
-    date: 'July 2025',
+    date: 'July 2026',
     current: true,
     items: [
       'AI Ad Creative Generator — generate scroll-stopping ad images from any product',
@@ -26,7 +26,7 @@ const releases = [
   },
   {
     version: '0.7',
-    date: 'July 2025',
+    date: 'July 2026',
     items: [
       'Product Detail Pages — deep dive into any product with full analysis',
       'Search — find any product instantly across the entire database',
@@ -37,7 +37,7 @@ const releases = [
   },
   {
     version: '0.6',
-    date: 'June 2025',
+    date: 'June 2026',
     items: [
       'Stripe Payments — Pro plan at $29/month',
       'Paywall — 3 free AI analyses then upgrade to Pro',
@@ -47,7 +47,7 @@ const releases = [
   },
   {
     version: '0.5',
-    date: 'June 2025',
+    date: 'June 2026',
     items: [
       'AI Product Analyzer — instant demand scores, competition analysis, ad angles, and hooks',
       'User Authentication — sign up, log in, secure accounts',

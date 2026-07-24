@@ -305,7 +305,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-gray-800">
         <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-gray-500 text-sm">Launchory &copy; 2025</span>
+          <span className="text-gray-500 text-sm">Launchory &copy; 2026</span>
           <div className="flex items-center gap-6">
             <Link href="/blog" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Blog</Link>
             <Link href="/changelog" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Changelog</Link>
