@@ -63,7 +63,40 @@ const testimonials = [
   },
 ]
 
-const asSeenOn = ['YouTube', 'TikTok', 'Shopify', 'AliExpress']
+const pressLogos = [
+  {
+    name: 'Shopify',
+    logo: (
+      <svg viewBox="0 0 110 24" className="h-4 w-auto" fill="currentColor" role="img" aria-label="Shopify">
+        <text x="0" y="18" fontFamily="Arial, Helvetica, sans-serif" fontWeight="800" fontSize="20">shopify</text>
+      </svg>
+    ),
+  },
+  {
+    name: 'Business Insider',
+    logo: (
+      <svg viewBox="0 0 230 24" className="h-4 w-auto" fill="currentColor" role="img" aria-label="Business Insider">
+        <text x="0" y="17" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="700" fontSize="16" letterSpacing="0.5">BUSINESS INSIDER</text>
+      </svg>
+    ),
+  },
+  {
+    name: 'Yahoo Finance',
+    logo: (
+      <svg viewBox="0 0 170 24" className="h-4 w-auto" fill="currentColor" role="img" aria-label="Yahoo Finance">
+        <text x="0" y="18" fontFamily="Arial, Helvetica, sans-serif" fontWeight="800" fontStyle="italic" fontSize="18">Yahoo Finance</text>
+      </svg>
+    ),
+  },
+  {
+    name: 'Fox Business',
+    logo: (
+      <svg viewBox="0 0 170 24" className="h-4 w-auto" fill="currentColor" role="img" aria-label="Fox Business">
+        <text x="0" y="18" fontFamily="'Arial Narrow', Arial, sans-serif" fontWeight="800" fontSize="19" letterSpacing="0.5">FOX BUSINESS</text>
+      </svg>
+    ),
+  },
+]
 
 const steps = [
   { number: '1', title: 'Find a product', description: 'Browse today’s curated feed of trending Shopify products.' },
@@ -251,12 +284,16 @@ export default function LandingPage() {
         </div>
 
         <div className="text-center">
-          <p className="text-gray-600 text-xs uppercase tracking-wider font-medium mb-5">As seen on</p>
-          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
-            {asSeenOn.map((brand) => (
-              <span key={brand} className="text-gray-600 text-xl font-bold tracking-tight">
-                {brand}
-              </span>
+          <p className="text-gray-600 text-xs tracking-wide mb-2">Trusted by dropshippers. Featured by the press.</p>
+          <p className="text-gray-500 text-xs uppercase tracking-wider font-semibold mb-6">As featured in</p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            {pressLogos.map((press) => (
+              <div
+                key={press.name}
+                className="flex items-center justify-center px-6 py-3 rounded-full border border-gray-800 bg-gray-900/60 text-gray-300"
+              >
+                {press.logo}
+              </div>
             ))}
           </div>
         </div>
