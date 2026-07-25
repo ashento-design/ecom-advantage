@@ -1,7 +1,8 @@
 import { randomUUID } from 'crypto'
-import OpenAI from 'openai'
+import OpenAI, { toFile } from 'openai'
 import { createServerClient } from '@/app/lib/supabase'
 import { getServiceRoleClient } from '@/app/lib/supabaseAdmin'
+import { parseSafeStoreUrl } from '@/app/lib/urlSafety'
 import type { AdFormat, AdStyle } from '@/app/types'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -24,21 +25,86 @@ const SIZE_BY_FORMAT: Record<AdFormat, '1024x1024' | '1536x1024' | '1024x1536'> 
   vertical: '1024x1536',
 }
 
-const STYLE_PROMPTS: Record<AdStyle, string> = {
-  clean: 'Clean, professional product photography on a simple neutral studio background, soft even lighting, sharp focus. No text, no graphics — just the product.',
-  lifestyle: 'A lifestyle scene showing the product in real, everyday use, natural lighting, authentic and relatable. No text overlays.',
-  bold: 'A bold, high-contrast graphic ad composition with the product as the hero and a short, punchy marketing headline rendered in large bold typography. Vibrant colors, scroll-stopping social media ad style.',
-  minimalist: 'A minimalist composition with generous negative space, a muted premium color palette, elegant styling. No text.',
+const FORMAT_LABEL: Record<AdFormat, string> = {
+  square: 'Square',
+  vertical: 'Vertical',
+  horizontal: 'Horizontal',
 }
 
-function buildAdPrompt(title: string, description: string, adAngle: string, style: AdStyle) {
-  return `Create a high-quality e-commerce advertisement image for this product: "${title}". ${description}
+const STYLE_LABEL: Record<AdStyle, string> = {
+  clean: 'Clean Product Shot',
+  lifestyle: 'Lifestyle Scene',
+  bold: 'Bold Text Focus',
+  minimalist: 'Minimalist',
+}
+
+// Platform-specific visual conventions to steer composition, not just aspect ratio.
+const FORMAT_PLATFORM_PROMPTS: Record<AdFormat, string> = {
+  square: 'Square 1:1 format, styled like a native Instagram/Facebook feed ad — centered composition, thumb-stopping visual, reads clearly at small mobile-feed thumbnail size.',
+  vertical: 'Vertical 9:16 format, styled like a native TikTok/Instagram Reels ad — full-bleed composition designed for a full-screen mobile app feed, bold and immediate, key subject centered in the safe zone.',
+  horizontal: 'Horizontal 16:9 format, styled like a YouTube thumbnail — high contrast, single clear focal point that reads well even at a small preview size.',
+}
+
+const STYLE_PROMPTS: Record<AdStyle, string> = {
+  clean: 'Clean product shot: pure white seamless background, professional studio lighting, soft realistic shadow beneath the product, sharp focus. No text, no graphics — presented like a premium catalog photo.',
+  lifestyle: 'Lifestyle scene: the product shown in a natural, real-world environment being used by a real person in an authentic, candid moment. Natural lighting, relatable setting. No text overlays.',
+  bold: 'Bold text focus: the product as the hero of a high-contrast graphic composition with a short, punchy marketing headline rendered in large, bold typography. Vibrant colors, scroll-stopping social ad style.',
+  minimalist: 'Minimalist: generous negative space/whitespace surrounding a single product, muted premium color palette, elegant and restrained styling. No text.',
+}
+
+function buildCorePrompt(title: string, description: string, adAngle: string, style: AdStyle, format: AdFormat) {
+  return `Product: "${title}"${description ? ` — ${description}` : ''}
 
 Ad angle / marketing message to visually convey: ${adAngle}
 
-Visual style: ${STYLE_PROMPTS[style]}
+Format: ${FORMAT_LABEL[format]}. ${FORMAT_PLATFORM_PROMPTS[format]}
 
-The image should look like a professional, polished advertisement ready to run on social media. Do not include any watermarks.`
+Style: ${STYLE_LABEL[style]}. ${STYLE_PROMPTS[style]}
+
+Make it look like a premium, polished Facebook/Instagram ad, ready to run — professional composition, realistic lighting, no watermarks, no placeholder text.`
+}
+
+function buildReferenceAdPrompt(title: string, description: string, adAngle: string, style: AdStyle, format: AdFormat) {
+  return `Create a professional ecommerce advertisement for this exact product. The attached image is the real product — match its shape, color, materials, proportions, and design precisely. Do not invent a different product or substitute a generic item.
+
+${buildCorePrompt(title, description, adAngle, style, format)}`
+}
+
+function buildTextOnlyAdPrompt(title: string, description: string, adAngle: string, style: AdStyle, format: AdFormat) {
+  return `Create a professional ecommerce advertisement for this exact product. Match the product appearance precisely to its title and description below — do not depict an unrelated or generic item.
+
+${buildCorePrompt(title, description, adAngle, style, format)}`
+}
+
+const MAX_REFERENCE_IMAGE_BYTES = 5 * 1024 * 1024 // 5MB, matches the UI's upload limit
+
+// Loads a reference image either from a data: URI (uploaded directly) or an
+// http(s) URL (from Supabase storage after upload, or pasted by the user).
+// User-pasted URLs are fetched server-side, so they go through the same
+// SSRF hardening as the Store Intelligence scraper before being requested.
+async function loadReferenceImage(referenceImageUrl: string): Promise<{ buffer: Buffer; contentType: string } | null> {
+  try {
+    if (referenceImageUrl.startsWith('data:')) {
+      const match = /^data:(.+);base64,(.+)$/.exec(referenceImageUrl)
+      if (!match) return null
+      const buffer = Buffer.from(match[2], 'base64')
+      if (buffer.length === 0 || buffer.length > MAX_REFERENCE_IMAGE_BYTES) return null
+      return { buffer, contentType: match[1] }
+    }
+
+    const safeUrl = parseSafeStoreUrl(referenceImageUrl)
+    if (!safeUrl) return null
+
+    const res = await fetch(safeUrl.toString(), { signal: AbortSignal.timeout(8000) })
+    if (!res.ok) return null
+    const contentType = res.headers.get('content-type') ?? 'image/png'
+    if (!contentType.startsWith('image/')) return null
+    const buffer = Buffer.from(await res.arrayBuffer())
+    if (buffer.length === 0 || buffer.length > MAX_REFERENCE_IMAGE_BYTES) return null
+    return { buffer, contentType }
+  } catch {
+    return null
+  }
 }
 
 export async function POST(request: Request) {
@@ -70,7 +136,7 @@ export async function POST(request: Request) {
   }
 
   let product_id: string, title: string, description: string, ad_angle: string
-  let format: AdFormat, style: AdStyle
+  let format: AdFormat, style: AdStyle, referenceImageUrl: string | undefined
   try {
     const body = await request.json()
     product_id = body.product_id
@@ -79,12 +145,22 @@ export async function POST(request: Request) {
     ad_angle = body.ad_angle
     format = body.format
     style = body.style
+    referenceImageUrl = typeof body.referenceImageUrl === 'string' && body.referenceImageUrl.trim() ? body.referenceImageUrl.trim() : undefined
     if (!title || !ad_angle || !SIZE_BY_FORMAT[format] || !STYLE_PROMPTS[style]) {
       throw new Error(`missing or invalid fields in request body: ${JSON.stringify(body)}`)
     }
   } catch (err) {
     console.error('[generate-ad] Failed to parse/validate request body:', err)
     return Response.json({ error: 'invalid_request_body' }, { status: 400 })
+  }
+
+  let referenceImage: { buffer: Buffer; contentType: string } | null = null
+  if (referenceImageUrl) {
+    referenceImage = await loadReferenceImage(referenceImageUrl)
+    if (!referenceImage) {
+      console.error(`[generate-ad] Failed to load reference image for user ${user.id}: ${referenceImageUrl.slice(0, 100)}`)
+      return Response.json({ error: 'invalid_reference_image' }, { status: 400 })
+    }
   }
 
   let supabaseAdmin
@@ -102,16 +178,33 @@ export async function POST(request: Request) {
 
   let imageBuffer: Buffer
   try {
-    const prompt = buildAdPrompt(title, description ?? '', ad_angle, style)
-    console.error(`[generate-ad] Calling OpenAI images.generate — model=${IMAGE_MODEL} size=${SIZE_BY_FORMAT[format]} quality=${IMAGE_QUALITY} user=${user.id} product=${product_id}`)
+    let result
+    if (referenceImage) {
+      const prompt = buildReferenceAdPrompt(title, description ?? '', ad_angle, style, format)
+      const referenceFile = await toFile(referenceImage.buffer, 'reference.png', { type: referenceImage.contentType })
+      console.error(`[generate-ad] Calling OpenAI images.edit (with reference image) — model=${IMAGE_MODEL} size=${SIZE_BY_FORMAT[format]} quality=${IMAGE_QUALITY} user=${user.id} product=${product_id}`)
 
-    const result = await openai.images.generate({
-      model: IMAGE_MODEL,
-      prompt,
-      size: SIZE_BY_FORMAT[format],
-      quality: IMAGE_QUALITY,
-      n: 1,
-    })
+      result = await openai.images.edit({
+        model: IMAGE_MODEL,
+        image: referenceFile,
+        prompt,
+        size: SIZE_BY_FORMAT[format],
+        quality: IMAGE_QUALITY,
+        input_fidelity: 'high',
+        n: 1,
+      })
+    } else {
+      const prompt = buildTextOnlyAdPrompt(title, description ?? '', ad_angle, style, format)
+      console.error(`[generate-ad] Calling OpenAI images.generate — model=${IMAGE_MODEL} size=${SIZE_BY_FORMAT[format]} quality=${IMAGE_QUALITY} user=${user.id} product=${product_id}`)
+
+      result = await openai.images.generate({
+        model: IMAGE_MODEL,
+        prompt,
+        size: SIZE_BY_FORMAT[format],
+        quality: IMAGE_QUALITY,
+        n: 1,
+      })
+    }
 
     const b64 = result.data?.[0]?.b64_json
     if (!b64) {
@@ -130,7 +223,7 @@ export async function POST(request: Request) {
         message: err.message,
       })
     } else {
-      console.error('[generate-ad] Unexpected error calling OpenAI images.generate:', err)
+      console.error('[generate-ad] Unexpected error calling OpenAI images.generate/edit:', err)
     }
     return Response.json({ error: 'ad_generation_failed' }, { status: 502 })
   }
