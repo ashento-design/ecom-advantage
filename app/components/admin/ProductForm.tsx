@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createBrowserClient } from '@/app/lib/supabase'
-import { AlertCircle, ImageOff, Upload } from 'lucide-react'
+import { AlertCircle, Eye, ImageOff, Loader2, Upload } from 'lucide-react'
+
+type UnsplashSuggestion = { id: string; thumb: string; full: string; alt: string }
 
 export type ProductFormValues = {
   title: string
@@ -35,10 +37,15 @@ export function ProductForm({
   const [title, setTitle] = useState(initialValues?.title ?? '')
   const [description, setDescription] = useState(initialValues?.description ?? '')
   const [imageUrl, setImageUrl] = useState(initialValues?.image_url ?? '')
+  const [previewUrl, setPreviewUrl] = useState(initialValues?.image_url ?? '')
   const [imageError, setImageError] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [unsplashResults, setUnsplashResults] = useState<UnsplashSuggestion[]>([])
+  const [unsplashLoading, setUnsplashLoading] = useState(false)
+  const [unsplashUnavailable, setUnsplashUnavailable] = useState(false)
   const [supplierUrl, setSupplierUrl] = useState(initialValues?.supplier_url ?? '')
   const [demandScore, setDemandScore] = useState(initialValues?.demand_score ?? 75)
   const [trendLabel, setTrendLabel] = useState(initialValues?.trend_label ?? 'Rising')
@@ -85,6 +92,7 @@ export function ProductForm({
         return
       }
       setImageUrl(data.url)
+      setPreviewUrl(data.url)
       setImageError(false)
     } catch {
       setUploadError('Upload failed. Please try again.')
@@ -93,6 +101,55 @@ export function ProductForm({
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
+
+  function handlePreview() {
+    setPreviewUrl(imageUrl.trim())
+    setImageError(false)
+  }
+
+  function handleUseSuggestion(suggestion: UnsplashSuggestion) {
+    setImageUrl(suggestion.full)
+    setPreviewUrl(suggestion.full)
+    setImageError(false)
+  }
+
+  useEffect(() => {
+    const query = title.trim()
+    if (query.length < 3) {
+      Promise.resolve().then(() => {
+        setUnsplashResults([])
+        setUnsplashUnavailable(false)
+        setUnsplashLoading(false)
+      })
+      return
+    }
+    let cancelled = false
+    Promise.resolve().then(() => setUnsplashLoading(true))
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/admin/unsplash-search?q=${encodeURIComponent(query)}`)
+        const data = await res.json().catch(() => null)
+        if (cancelled) return
+        if (!res.ok) {
+          setUnsplashUnavailable(data?.error === 'not_configured')
+          setUnsplashResults([])
+          return
+        }
+        setUnsplashUnavailable(false)
+        setUnsplashResults(Array.isArray(data?.results) ? data.results : [])
+      } catch {
+        if (!cancelled) {
+          setUnsplashResults([])
+        }
+      } finally {
+        if (!cancelled) setUnsplashLoading(false)
+      }
+    }, 600)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [title])
 
   function handleNicheSelectChange(value: string) {
     if (value === CUSTOM_NICHE) {
@@ -154,6 +211,7 @@ export function ProductForm({
 
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">Image URL</label>
+        <p className="text-gray-500 text-xs mb-3">For best results use AliExpress product images — paste the direct image URL.</p>
         <div className="flex gap-2 mb-3">
           <input
             type="url"
@@ -163,6 +221,15 @@ export function ProductForm({
             placeholder="https://images.unsplash.com/photo-…?w=400"
             className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors text-sm"
           />
+          <button
+            type="button"
+            onClick={handlePreview}
+            disabled={!imageUrl.trim()}
+            className="shrink-0 inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-white text-sm font-medium px-4 py-3 rounded-xl transition-colors border border-gray-700"
+          >
+            <Eye size={15} />
+            Preview
+          </button>
           <input
             ref={fileInputRef}
             type="file"
@@ -187,10 +254,10 @@ export function ProductForm({
         {uploadError && (
           <p className="text-red-400 text-xs mb-3">{uploadError}</p>
         )}
-        <div className="w-full h-40 rounded-xl bg-gray-800 border border-gray-700 flex items-center justify-center overflow-hidden">
-          {imageUrl && !imageError ? (
+        <div className="w-full h-40 rounded-xl bg-gray-800 border border-gray-700 flex items-center justify-center overflow-hidden mb-4">
+          {previewUrl && !imageError ? (
             <img
-              src={imageUrl}
+              src={previewUrl}
               alt="Preview"
               className="w-full h-full object-cover"
               onError={() => setImageError(true)}
@@ -198,10 +265,41 @@ export function ProductForm({
           ) : (
             <div className="flex flex-col items-center gap-2 text-gray-600">
               <ImageOff size={22} />
-              <span className="text-xs">{imageUrl ? 'Could not load image' : 'Image preview'}</span>
+              <span className="text-xs">
+                {imageError ? 'Could not load image' : imageUrl ? 'Click Preview to load this image' : 'Image preview'}
+              </span>
             </div>
           )}
         </div>
+
+        {(unsplashLoading || unsplashResults.length > 0 || unsplashUnavailable) && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-xs font-medium text-gray-400">Suggested Unsplash images for &ldquo;{title.trim()}&rdquo;</p>
+              {unsplashLoading && <Loader2 size={12} className="text-gray-500 animate-spin" />}
+            </div>
+            {unsplashUnavailable ? (
+              <p className="text-gray-600 text-xs">
+                Unsplash suggestions aren&rsquo;t configured — set UNSPLASH_ACCESS_KEY to enable this.
+              </p>
+            ) : (
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {unsplashResults.map((suggestion) => (
+                  <button
+                    key={suggestion.id}
+                    type="button"
+                    onClick={() => handleUseSuggestion(suggestion)}
+                    title={suggestion.alt}
+                    className="aspect-square rounded-lg overflow-hidden border border-gray-700 hover:border-emerald-500 transition-colors"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={suggestion.thumb} alt={suggestion.alt} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
