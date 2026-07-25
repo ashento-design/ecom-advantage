@@ -2,32 +2,43 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import {
-  Search, TrendingUp, TrendingDown, Minus, Users, Tag, Megaphone, Calendar,
-  Lightbulb, Target, Lock, Sparkles, Clock, DollarSign,
+  Search, Lock, Sparkles,
 } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { Navbar } from '@/app/components/Navbar'
 import { UpgradeModal } from '@/app/components/UpgradeModal'
+import { StoreAnalysisCard, type StoreAnalysis } from '@/app/components/StoreAnalysisCard'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 const EXAMPLE_STORES = ['gymshark.com', 'colourpop.com', 'ohpolly.com', 'fashionnova.com']
 
-type ScrapedProduct = { title: string; price: string; image_url: string }
-
-type StoreAnalysis = {
-  store_name: string
-  estimated_monthly_revenue: string
-  estimated_monthly_visitors: string
-  confidence_level: 'Low' | 'Medium' | 'High'
-  top_products: ScrapedProduct[]
-  main_niches: string[]
-  ad_activity: 'Active' | 'Low' | 'Unknown'
-  store_age_estimate: string
-  revenue_trend: 'Growing' | 'Stable' | 'Declining' | 'Unknown'
-  insights: string[]
-  winning_angles: string[]
+const DEMO_ANALYSIS: StoreAnalysis = {
+  store_name: 'Gymshark',
+  estimated_monthly_revenue: '$4.2M - $6.8M',
+  estimated_monthly_visitors: '1.8M - 2.4M',
+  confidence_level: 'High',
+  main_niches: ['Fitness Apparel', 'Activewear'],
+  ad_activity: 'Active',
+  store_age_estimate: '10+ years',
+  revenue_trend: 'Growing',
+  top_products: [
+    { title: 'Seamless Leggings', price: '$60', image_url: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=400' },
+    { title: 'Sports Bra', price: '$35', image_url: 'https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=400' },
+    { title: 'Training Shorts', price: '$32', image_url: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400' },
+    { title: 'Running Shoes', price: '$110', image_url: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400' },
+  ],
+  insights: [
+    'Product drops are timed around new collection launches, creating recurring spikes in traffic and urgency.',
+    'Heavy reliance on influencer and athlete-led UGC rather than traditional studio ad creative.',
+    'Bundle offers on leggings + sports bra pairs are used to lift average order value.',
+    'Strong repeat-purchase rate driven by a loyalty/rewards program tied to the mobile app.',
+  ],
+  winning_angles: [
+    '"Built for your hardest set" — performance-first messaging aimed at serious lifters.',
+    'Influencer transformation content pairing a product with a visible before/after result.',
+    'Limited restock urgency angle for core bestsellers ("back in stock, won\'t last").',
+  ],
 }
 
 type RecentAnalysis = {
@@ -36,19 +47,6 @@ type RecentAnalysis = {
   store_name: string | null
   analysis_data: StoreAnalysis
   created_at: string
-}
-
-const confidenceColor: Record<string, string> = {
-  Low: 'bg-gray-800 text-gray-400 border-gray-700',
-  Medium: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
-  High: 'bg-emerald-600/15 text-emerald-400 border-emerald-500/30',
-}
-
-const trendConfig: Record<string, { icon: typeof TrendingUp; color: string }> = {
-  Growing: { icon: TrendingUp, color: 'text-emerald-400' },
-  Stable: { icon: Minus, color: 'text-gray-400' },
-  Declining: { icon: TrendingDown, color: 'text-red-400' },
-  Unknown: { icon: Minus, color: 'text-gray-500' },
 }
 
 export default function StoreIntelligencePage() {
@@ -106,7 +104,8 @@ export default function StoreIntelligencePage() {
       if (!res.ok) {
         setError(
           data?.error === 'invalid_url' ? 'That doesn\'t look like a valid store URL.' :
-          data?.error === 'store_unreachable' ? 'Couldn\'t reach that store\'s public data. Make sure it\'s a live Shopify store.' :
+          data?.error === 'not_shopify' ? 'This doesn\'t appear to be a Shopify store. Try entering the store\'s main domain like: example.com' :
+          data?.error === 'store_unreachable' ? 'Couldn\'t reach that store. Double check the domain and try again.' :
           data?.error === 'analysis_failed' ? 'Analysis failed. Please try again.' :
           'Something went wrong. Please try again.'
         )
@@ -257,117 +256,13 @@ export default function StoreIntelligencePage() {
         )}
 
         {result && !analyzing && (
-          <div className="space-y-6">
-            {/* Revenue card */}
-            <div className="bg-gradient-to-br from-indigo-600/15 to-gray-900 border border-indigo-500/20 rounded-2xl p-6 sm:p-8">
-              <div className="flex items-center justify-between gap-4 mb-2 flex-wrap">
-                <h2 className="text-white font-bold text-lg">{result.store_name}</h2>
-                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${confidenceColor[result.confidence_level] ?? confidenceColor.Low}`}>
-                  {result.confidence_level} Confidence
-                </span>
-              </div>
-              <div className="flex items-center gap-2 mb-1">
-                <DollarSign size={20} className="text-emerald-400" />
-                <span className="text-3xl font-bold text-white">{result.estimated_monthly_revenue}</span>
-              </div>
-              <p className="text-gray-500 text-sm">Estimated monthly revenue</p>
-            </div>
+          <StoreAnalysisCard analysis={result} storeUrl={storeUrl} />
+        )}
 
-            {/* Metrics row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-                <Users size={15} className="text-indigo-400 mb-2" />
-                <p className="text-white font-semibold text-sm">{result.estimated_monthly_visitors}</p>
-                <p className="text-gray-500 text-xs mt-0.5">Monthly visitors</p>
-              </div>
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-                <Tag size={15} className="text-indigo-400 mb-2" />
-                <p className="text-white font-semibold text-sm truncate">{result.main_niches?.join(', ') || 'Unknown'}</p>
-                <p className="text-gray-500 text-xs mt-0.5">Niches</p>
-              </div>
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-                <Megaphone size={15} className="text-indigo-400 mb-2" />
-                <p className="text-white font-semibold text-sm">{result.ad_activity}</p>
-                <p className="text-gray-500 text-xs mt-0.5">Ad activity</p>
-              </div>
-              <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-                <Calendar size={15} className="text-indigo-400 mb-2" />
-                <p className="text-white font-semibold text-sm">{result.store_age_estimate}</p>
-                <p className="text-gray-500 text-xs mt-0.5">Store age</p>
-              </div>
-            </div>
-
-            {/* Revenue trend */}
-            {(() => {
-              const trend = trendConfig[result.revenue_trend] ?? trendConfig.Unknown
-              const TrendIcon = trend.icon
-              return (
-                <div className="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-xl px-4 py-3">
-                  <TrendIcon size={16} className={trend.color} />
-                  <span className="text-gray-300 text-sm">Revenue trend: <span className={`font-semibold ${trend.color}`}>{result.revenue_trend}</span></span>
-                </div>
-              )
-            })()}
-
-            {/* Top products */}
-            {result.top_products?.length > 0 && (
-              <div>
-                <h3 className="text-white font-semibold text-sm mb-3">Top Products</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {result.top_products.slice(0, 8).map((p, i) => (
-                    <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-                      <div className="relative h-24 bg-gray-800">
-                        {p.image_url && (
-                          <Image src={p.image_url} alt={p.title} fill sizes="200px" className="object-cover" unoptimized />
-                        )}
-                      </div>
-                      <div className="p-2.5">
-                        <p className="text-white text-xs font-medium truncate">{p.title}</p>
-                        <p className="text-emerald-400 text-xs font-semibold mt-0.5">{p.price}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Insights */}
-            {result.insights?.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Lightbulb size={15} className="text-yellow-400" />
-                  <h3 className="text-white font-semibold text-sm">AI Insights</h3>
-                </div>
-                <div className="space-y-2">
-                  {result.insights.map((insight, i) => (
-                    <div key={i} className="flex items-start gap-3 p-3.5 bg-gray-900 border border-gray-800 rounded-xl">
-                      <span className="shrink-0 w-5 h-5 bg-yellow-500/15 text-yellow-400 rounded-md flex items-center justify-center text-xs font-bold border border-yellow-500/30">
-                        {i + 1}
-                      </span>
-                      <p className="text-gray-300 text-sm leading-relaxed">{insight}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Winning angles */}
-            {result.winning_angles?.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Target size={15} className="text-indigo-400" />
-                  <h3 className="text-white font-semibold text-sm">Winning Angles</h3>
-                </div>
-                <div className="space-y-2">
-                  {result.winning_angles.map((angle, i) => (
-                    <div key={i} className="flex items-start gap-3 p-3.5 bg-gray-800/60 border border-gray-700/60 rounded-xl">
-                      <Clock size={14} className="text-indigo-400 mt-0.5 shrink-0" />
-                      <p className="text-gray-300 text-sm leading-relaxed">{angle}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+        {!result && !analyzing && (
+          <div>
+            <p className="text-gray-500 text-xs uppercase tracking-wider font-medium mb-3">Example Report</p>
+            <StoreAnalysisCard analysis={DEMO_ANALYSIS} storeUrl="gymshark.com" isDemo />
           </div>
         )}
       </div>

@@ -10,14 +10,12 @@ type ScrapedProduct = {
   image_url: string
 }
 
-async function fetchJson(url: string) {
+async function tryFetch(url: string): Promise<Response | null> {
   try {
-    const res = await fetch(url, {
+    return await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; LaunchoryBot/1.0)' },
       signal: AbortSignal.timeout(8000),
     })
-    if (!res.ok) return null
-    return await res.json()
   } catch {
     return null
   }
@@ -107,18 +105,27 @@ export async function POST(request: Request) {
 
   const origin = `${storeUrl.protocol}//${storeUrl.host}`
 
-  const [productsData, collectionsData, aboutHtml] = await Promise.all([
-    fetchJson(`${origin}/products.json?limit=20&sort_by=best-selling`),
-    fetchJson(`${origin}/collections.json`),
+  const [productsRes, collectionsRes, aboutHtml] = await Promise.all([
+    tryFetch(`${origin}/products.json?limit=20&sort_by=best-selling`),
+    tryFetch(`${origin}/collections.json`),
     fetchText(`${origin}/pages/about`),
   ])
+
+  if (!productsRes && !collectionsRes) {
+    return Response.json({ error: 'store_unreachable' }, { status: 502 })
+  }
+
+  const productsData = productsRes?.ok ? await productsRes.json().catch(() => null) : null
+  const collectionsData = collectionsRes?.ok ? await collectionsRes.json().catch(() => null) : null
 
   const rawProducts: Array<Record<string, unknown>> = Array.isArray(productsData?.products)
     ? productsData.products
     : []
 
   if (rawProducts.length === 0 && !collectionsData) {
-    return Response.json({ error: 'store_unreachable' }, { status: 502 })
+    // The domain responded, but doesn't expose Shopify's public storefront
+    // JSON endpoints — almost certainly not a Shopify store.
+    return Response.json({ error: 'not_shopify' }, { status: 422 })
   }
 
   const topProducts: ScrapedProduct[] = rawProducts.slice(0, 8).map((p) => {
