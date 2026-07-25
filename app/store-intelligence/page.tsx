@@ -15,8 +15,8 @@ const EXAMPLE_STORES = ['gymshark.com', 'colourpop.com', 'ohpolly.com', 'fashion
 
 const DEMO_ANALYSIS: StoreAnalysis = {
   store_name: 'Gymshark',
-  estimated_monthly_revenue: '$4.2M - $6.8M',
-  estimated_monthly_visitors: '1.8M - 2.4M',
+  estimated_monthly_revenue: '$8M - $15M',
+  estimated_monthly_visitors: '4.5M - 7M',
   confidence_level: 'High',
   main_niches: ['Fitness Apparel', 'Activewear'],
   ad_activity: 'Active',

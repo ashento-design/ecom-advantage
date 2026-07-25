@@ -128,6 +128,9 @@ export function StoreAnalysisCard({
         <p className={`text-xs mt-1.5 font-medium ${confidence.label}`}>
           {analysis.confidence_level} confidence estimate — based on scraped storefront data
         </p>
+        <p className="text-gray-600 text-xs mt-3 leading-relaxed">
+          Revenue estimates are approximations based on available public data and AI analysis. Actual figures may vary significantly.
+        </p>
       </div>
 
       {/* Metrics row */}
