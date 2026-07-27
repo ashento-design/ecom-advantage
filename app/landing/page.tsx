@@ -297,6 +297,7 @@ export default async function LandingPage() {
           <div className="flex items-center gap-6">
             <Link href="/blog" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Blog</Link>
             <Link href="/changelog" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Changelog</Link>
+            <Link href="/help" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Help</Link>
             <Link href="/privacy" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Privacy</Link>
             <Link href="/terms" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Terms</Link>
           </div>

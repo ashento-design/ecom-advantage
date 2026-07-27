@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Rocket, Search, Bookmark, Image as ImageIcon, User, LogOut, ShieldCheck, Gift, Sparkles, PackagePlus, LineChart } from 'lucide-react'
+import { Rocket, Search, Bookmark, Image as ImageIcon, User, LogOut, ShieldCheck, Gift, Sparkles, PackagePlus, LineChart, HelpCircle } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { SearchModal } from '@/app/components/SearchModal'
 import { NotificationsDropdown } from '@/app/components/NotificationsDropdown'
@@ -131,6 +131,14 @@ export function Navbar({ user }: { user: SupabaseUser | null }) {
                     >
                       <PackagePlus size={14} className="text-gray-400" />
                       Request a Product
+                    </Link>
+                    <Link
+                      href="/help"
+                      className="flex items-center gap-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      <HelpCircle size={14} className="text-gray-400" />
+                      Help Center
                     </Link>
                     {isPro && (
                       <Link
