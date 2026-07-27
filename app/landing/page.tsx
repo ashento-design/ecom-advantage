@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import type { Metadata } from 'next'
 import {
   Rocket, ArrowRight, TrendingUp, Zap, Target, Megaphone,
@@ -7,23 +6,14 @@ import {
 } from 'lucide-react'
 import { ReferralCapture } from '@/app/components/ReferralCapture'
 import { TestimonialCard, type TestimonialData } from '@/app/components/TestimonialCard'
+import { DemoSection } from '@/app/components/DemoSection'
+import { PricingSection } from '@/app/components/PricingSection'
 import { getServiceRoleClient } from '@/app/lib/supabaseAdmin'
 
 // Testimonials rarely change, so a short revalidation window keeps the
 // landing page mostly static (fast, cacheable) while still picking up
 // admin edits within a few minutes instead of requiring a full rebuild.
 export const revalidate = 300
-
-// Below-the-fold and heavier client components — code-split them out of
-// the initial bundle so the hero becomes interactive faster. Both still
-// server-render (ssr defaults to true) so the marketing copy stays
-// crawlable for SEO; only the JS payload is deferred.
-const DemoSection = dynamic(() => import('@/app/components/DemoSection').then((m) => m.DemoSection), {
-  loading: () => <div className="max-w-5xl mx-auto px-6 py-24"><div className="h-[28rem] bg-gray-900/60 border border-gray-800 rounded-2xl animate-pulse" /></div>,
-})
-const PricingSection = dynamic(() => import('@/app/components/PricingSection').then((m) => m.PricingSection), {
-  loading: () => <div className="max-w-6xl mx-auto px-6 py-24"><div className="h-96 bg-gray-900/60 border border-gray-800 rounded-2xl animate-pulse" /></div>,
-})
 
 export const metadata: Metadata = {
   title: 'Find Winning Products Faster',
@@ -183,8 +173,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <DemoSection />
-
       {/* Stats bar */}
       <section className="border-y border-gray-800 bg-gray-900">
         <div className="max-w-6xl mx-auto px-6 py-10">
@@ -201,6 +189,8 @@ export default async function LandingPage() {
           </div>
         </div>
       </section>
+
+      <DemoSection />
 
       {/* Features */}
       <section id="features" className="max-w-6xl mx-auto px-6 py-24 scroll-mt-16">
