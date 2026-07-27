@@ -30,6 +30,8 @@ export default function AccountPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [upgrading, setUpgrading] = useState(false)
+  const [managingSubscription, setManagingSubscription] = useState(false)
+  const [portalError, setPortalError] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -87,6 +89,28 @@ export default function AccountPage() {
     }
   }
 
+  async function handleManageSubscription() {
+    setManagingSubscription(true)
+    setPortalError(null)
+    try {
+      const res = await fetch('/api/stripe/portal', { method: 'POST' })
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !data?.url) {
+        setPortalError(
+          data?.error === 'no_stripe_customer'
+            ? 'We couldn’t find a billing record for your account. Email hello@launchory.io and we’ll help.'
+            : 'Something went wrong opening the billing portal. Please try again.'
+        )
+        return
+      }
+      window.location.href = data.url
+    } catch {
+      setPortalError('Network error. Please try again.')
+    } finally {
+      setManagingSubscription(false)
+    }
+  }
+
   const isPro = profile?.plan === 'pro'
   const analysesUsed = profile?.analyses_used ?? 0
   const usagePct = Math.min(100, Math.round((analysesUsed / FREE_ANALYSIS_LIMIT) * 100))
@@ -115,9 +139,26 @@ export default function AccountPage() {
         ) : (
           <div className="space-y-4">
             {isPro && (
-              <div className="flex items-center gap-3 p-4 bg-green-500/10 border border-green-500/30 rounded-xl">
-                <CheckCircle size={18} className="text-green-400 shrink-0" />
-                <p className="text-green-400 text-sm font-medium">You&apos;re on Pro — thanks for supporting Launchory.</p>
+              <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl">
+                <div className="flex items-center gap-3 flex-wrap justify-between">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle size={18} className="text-green-400 shrink-0" />
+                    <p className="text-green-400 text-sm font-medium">You&apos;re on Pro — thanks for supporting Launchory.</p>
+                  </div>
+                  <button
+                    onClick={handleManageSubscription}
+                    disabled={managingSubscription}
+                    className="inline-flex items-center gap-2 bg-gray-900/60 hover:bg-gray-900 disabled:opacity-50 border border-green-500/30 text-green-400 text-xs font-semibold px-3.5 py-2 rounded-lg transition-colors shrink-0"
+                  >
+                    {managingSubscription && (
+                      <div className="w-3.5 h-3.5 border-2 border-green-400/30 border-t-green-400 rounded-full animate-spin" />
+                    )}
+                    Manage Subscription
+                  </button>
+                </div>
+                {portalError && (
+                  <p className="text-red-400 text-xs mt-3">{portalError}</p>
+                )}
               </div>
             )}
 

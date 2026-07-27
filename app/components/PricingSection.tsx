@@ -33,7 +33,7 @@ const comparisonRows: { label: string; launchory: string; minea: string; dropshi
 const faqs = [
   {
     q: 'Can I cancel anytime?',
-    a: 'Yes. There\'s no contract — cancel your Pro subscription anytime from your account page and you\'ll keep access until the end of your billing period.',
+    a: 'Yes. There\'s no contract — manage or cancel your subscription anytime via the billing portal and you\'ll keep access until the end of your billing period.',
   },
   {
     q: 'What happens when I hit the free plan limit?',
