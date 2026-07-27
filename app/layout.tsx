@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { NavigationProgressBar } from "@/app/components/NavigationProgressBar";
 import { AnalyticsPageViewTracker } from "@/app/components/AnalyticsPageViewTracker";
+import { CookieConsent } from "@/app/components/CookieConsent";
 import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"] });
@@ -40,6 +41,7 @@ export default function RootLayout({
         <NavigationProgressBar />
         <AnalyticsPageViewTracker />
         {children}
+        <CookieConsent />
         <Analytics />
       </body>
     </html>
