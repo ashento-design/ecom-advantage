@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useRef, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { TrendingUp, Flame, Star, BarChart3, Clock, AlertCircle, RotateCw } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { useSavedProducts } from '@/app/lib/useSavedProducts'
@@ -9,6 +9,7 @@ import { useProductAnalysis } from '@/app/lib/useProductAnalysis'
 import { useToast } from '@/app/lib/useToast'
 import { AppLayout } from '@/app/components/AppLayout'
 import { ProductCard, ProductCardSkeleton } from '@/app/components/ProductCard'
+import { Pagination } from '@/app/components/Pagination'
 import { AnalysisModal } from '@/app/components/AnalysisModal'
 import { UpgradeModal } from '@/app/components/UpgradeModal'
 import { Toast } from '@/app/components/Toast'
@@ -44,14 +45,6 @@ const tabs: { value: TabOption; label: string; defaultSort: SortOption }[] = [
   { value: 'staff', label: 'Staff Picks', defaultSort: 'demand' },
 ]
 
-function applyTab(products: Product[], tab: TabOption) {
-  const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000
-  if (tab === 'hot') return products.filter((p) => p.trend_label === 'Hot')
-  if (tab === 'new') return products.filter((p) => Date.now() - new Date(p.created_at).getTime() < fourteenDaysMs)
-  if (tab === 'staff') return products.filter((p) => p.is_featured)
-  return products
-}
-
 function sortProducts(products: Product[], sortBy: SortOption) {
   const sorted = [...products]
   if (sortBy === 'newest') {
@@ -71,10 +64,63 @@ function sortProducts(products: Product[], sortBy: SortOption) {
   return sorted
 }
 
+const PAGE_SIZE = 12
+
+const COLUMN_SORT: Partial<Record<SortOption, { column: 'demand_score' | 'created_at' | 'views'; ascending: boolean }>> = {
+  demand: { column: 'demand_score', ascending: false },
+  newest: { column: 'created_at', ascending: false },
+  views: { column: 'views', ascending: false },
+}
+
+// Fetches one page of the feed with the tab/niche filters and sort pushed
+// down to Supabase via .range() instead of loading every product. "Trending"
+// and "Launchory Score" are computed rankings rather than a single indexed
+// column, so those two sorts fall back to pulling the filtered set and
+// ranking it in memory before slicing out the requested page.
+async function fetchProductPage(tab: TabOption, niche: string, sortBy: SortOption, page: number) {
+  const supabase = createBrowserClient()
+  let query = supabase.from('products').select('*', { count: 'exact' })
+
+  if (tab === 'hot') query = query.eq('trend_label', 'Hot')
+  if (tab === 'staff') query = query.eq('is_featured', true)
+  if (tab === 'new') {
+    const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
+    query = query.gte('created_at', fourteenDaysAgo)
+  }
+  if (niche !== 'All') query = query.eq('niche', niche)
+
+  const from = (page - 1) * PAGE_SIZE
+  const columnSort = COLUMN_SORT[sortBy]
+
+  if (columnSort) {
+    const { data, error, count } = await query
+      .order(columnSort.column, { ascending: columnSort.ascending })
+      .range(from, from + PAGE_SIZE - 1)
+    return { data, error, count }
+  }
+
+  const { data, error, count } = await query
+  if (error || !data) return { data: null, error, count: null }
+  const ranked = sortProducts(data, sortBy)
+  return { data: ranked.slice(from, from + PAGE_SIZE), error: null, count }
+}
+
 export default function Dashboard() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
+  )
+}
+
+function DashboardContent() {
   const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
-  const [fetchError, setFetchError] = useState(false)
   const [retryToken, setRetryToken] = useState(0)
   const [filter, setFilter] = useState('All')
   const [sortBy, setSortBy] = useState<SortOption>('demand')
@@ -88,6 +134,26 @@ export default function Dashboard() {
   const [recentlyViewed, setRecentlyViewed] = useState<RecentlyViewedProduct[]>([])
   const [proTipDismissed, setProTipDismissed] = useState(true)
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  const [pageProducts, setPageProducts] = useState<Product[]>([])
+  const [totalCount, setTotalCount] = useState(0)
+  const [pageLoading, setPageLoading] = useState(true)
+  const [pageError, setPageError] = useState(false)
+  const gridRef = useRef<HTMLDivElement>(null)
+  const isFirstPageRender = useRef(true)
+
+  const currentPage = Math.max(1, Number(searchParams.get('page')) || 1)
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+
+  function goToPage(page: number) {
+    const params = new URLSearchParams(searchParams.toString())
+    if (page <= 1) params.delete('page')
+    else params.set('page', String(page))
+    const qs = params.toString()
+    router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+  }
 
   const { toastMessage, showToast } = useToast()
   const { savedIds, toggleSave } = useSavedProducts(user, showToast)
@@ -112,10 +178,7 @@ export default function Dashboard() {
     if (retryToken === 0) {
       const cached = getCachedProducts()
       if (cached) {
-        Promise.resolve().then(() => {
-          setProducts(cached)
-          setLoading(false)
-        })
+        Promise.resolve().then(() => setProducts(cached))
         return
       }
     }
@@ -129,24 +192,46 @@ export default function Dashboard() {
           .order('demand_score', { ascending: false })
         if (error) {
           console.error('Supabase error:', JSON.stringify(error), error)
-          setFetchError(true)
         } else {
           setProducts(data ?? [])
           setCachedProducts(data ?? [])
         }
       } catch (err) {
         console.error('Failed to fetch products:', err)
-        setFetchError(true)
-      } finally {
-        setLoading(false)
       }
     }
     fetchProducts()
   }, [retryToken])
 
+  useEffect(() => {
+    let cancelled = false
+    setPageLoading(true)
+    setPageError(false)
+    fetchProductPage(activeTab, filter, sortBy, currentPage).then(({ data, error, count }) => {
+      if (cancelled) return
+      if (error || !data) {
+        console.error('Failed to load product page:', error?.message)
+        setPageError(true)
+      } else {
+        setPageProducts(data)
+        setTotalCount(count ?? 0)
+      }
+      setPageLoading(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [activeTab, filter, sortBy, currentPage, retryToken])
+
+  useEffect(() => {
+    if (isFirstPageRender.current) {
+      isFirstPageRender.current = false
+      return
+    }
+    gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [currentPage])
+
   function retryFetchProducts() {
-    setLoading(true)
-    setFetchError(false)
     setRetryToken((t) => t + 1)
   }
 
@@ -235,11 +320,11 @@ export default function Dashboard() {
   function handleTabClick(tab: TabOption) {
     setActiveTab(tab)
     setSortBy(tabs.find((t) => t.value === tab)!.defaultSort)
+    goToPage(1)
   }
 
-  const tabFiltered = applyTab(products, activeTab)
-  const filtered = filter === 'All' ? tabFiltered : tabFiltered.filter((p) => p.niche === filter)
-  const sorted = sortProducts(filtered, sortBy)
+  const rangeStart = totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
+  const rangeEnd = Math.min(currentPage * PAGE_SIZE, totalCount)
 
   const recommendedProducts = preferredNiches.length > 0
     ? [...products]
@@ -393,7 +478,7 @@ export default function Dashboard() {
             {niches.map((niche) => (
               <button
                 key={niche}
-                onClick={() => setFilter(niche)}
+                onClick={() => { setFilter(niche); goToPage(1) }}
                 className={`shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
                   filter === niche
                     ? 'bg-indigo-600 text-white'
@@ -407,7 +492,7 @@ export default function Dashboard() {
 
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            onChange={(e) => { setSortBy(e.target.value as SortOption); goToPage(1) }}
             className="shrink-0 bg-gray-900 border border-gray-800 text-gray-300 text-sm font-medium rounded-xl px-4 py-2 outline-none focus:border-gray-600 transition-colors"
           >
             <option value="demand">Sort: Highest Demand</option>
@@ -418,42 +503,55 @@ export default function Dashboard() {
           </select>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <ProductCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : fetchError ? (
-          <div className="text-center py-20">
-            <div className="w-12 h-12 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertCircle size={20} className="text-red-400" />
+        <div ref={gridRef} className="scroll-mt-20">
+          {!pageLoading && !pageError && totalCount > 0 && (
+            <div className="flex justify-end mb-4">
+              <p className="text-gray-500 text-sm">
+                Showing {rangeStart}-{rangeEnd} of {totalCount} products
+              </p>
             </div>
-            <p className="text-white font-semibold mb-1">Couldn&apos;t load products</p>
-            <p className="text-gray-500 text-sm mb-6">Something went wrong fetching the feed.</p>
-            <button
-              onClick={retryFetchProducts}
-              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
-            >
-              <RotateCw size={14} />
-              Retry
-            </button>
-          </div>
-        ) : sorted.length === 0 ? (
-          <div className="text-center py-20 text-gray-500">No products found.</div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sorted.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                saved={savedIds.has(product.id)}
-                onToggleSave={toggleSave}
-                onAnalyze={analyzeProduct}
-              />
-            ))}
-          </div>
-        )}
+          )}
+
+          {pageLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : pageError ? (
+            <div className="text-center py-20">
+              <div className="w-12 h-12 bg-red-500/10 border border-red-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle size={20} className="text-red-400" />
+              </div>
+              <p className="text-white font-semibold mb-1">Couldn&apos;t load products</p>
+              <p className="text-gray-500 text-sm mb-6">Something went wrong fetching the feed.</p>
+              <button
+                onClick={retryFetchProducts}
+                className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+              >
+                <RotateCw size={14} />
+                Retry
+              </button>
+            </div>
+          ) : pageProducts.length === 0 ? (
+            <div className="text-center py-20 text-gray-500">No products found.</div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {pageProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    saved={savedIds.has(product.id)}
+                    onToggleSave={toggleSave}
+                    onAnalyze={analyzeProduct}
+                  />
+                ))}
+              </div>
+              <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={goToPage} />
+            </>
+          )}
+        </div>
       </div>
     </AppLayout>
   )
