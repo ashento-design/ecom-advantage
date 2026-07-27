@@ -3,14 +3,19 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, ExternalLink, Zap, Bookmark, Flame, TrendingUp, ArrowUp, AlertCircle } from 'lucide-react'
+import { useParams } from 'next/navigation'
+import {
+  ArrowLeft, ExternalLink, Zap, Bookmark, Flame, TrendingUp, ArrowUp, AlertCircle,
+  Lock, Share2, Check, Calculator, ThumbsUp, Lightbulb,
+} from 'lucide-react'
 import { SupplierQuickLinks } from '@/app/components/SupplierQuickLinks'
+import { AdSearchButtons } from '@/app/components/AdSearchButtons'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { useSavedProducts } from '@/app/lib/useSavedProducts'
 import { useProductAnalysis } from '@/app/lib/useProductAnalysis'
 import { useToast } from '@/app/lib/useToast'
 import { computeLaunchoryScore } from '@/app/lib/launchoryScore'
+import { getAdActivityLevel } from '@/app/lib/adSearchLinks'
 import { AppLayout } from '@/app/components/AppLayout'
 import { ProductCard } from '@/app/components/ProductCard'
 import { ScoreRing } from '@/app/components/ScoreRing'
@@ -21,6 +26,12 @@ import { Toast } from '@/app/components/Toast'
 import type { Product, AnalysisResult } from '@/app/types'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
+// Products don't carry real per-product supplier cost data, so this is a
+// flat, disclosed heuristic default (typical low-ticket dropshipping item
+// cost) to pre-fill the profit calculator's "Product cost" field — not a
+// real AliExpress price for this specific product.
+const SUGGESTED_PRODUCT_COST = 12
+
 const trendConfig: Record<string, { color: string; icon: React.ReactNode }> = {
   Hot: { color: 'bg-red-500/20 text-red-400 border-red-500/30', icon: <Flame size={13} /> },
   Trending: { color: 'bg-orange-500/20 text-orange-400 border-orange-500/30', icon: <TrendingUp size={13} /> },
@@ -30,7 +41,6 @@ const trendConfig: Record<string, { color: string; icon: React.ReactNode }> = {
 export default function ProductDetailPage() {
   const params = useParams<{ id: string }>()
   const productId = params.id
-  const router = useRouter()
 
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
@@ -40,6 +50,7 @@ export default function ProductDetailPage() {
   const [existingAnalysis, setExistingAnalysis] = useState<AnalysisResult | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
 
   const { toastMessage, showToast } = useToast()
   const { savedIds, toggleSave } = useSavedProducts(user, showToast)
@@ -49,17 +60,27 @@ export default function ProductDetailPage() {
     analyzeProduct, closeModal, setShowUpgradeModal, handleUpgrade,
   } = useProductAnalysis()
 
+  // Public page — no redirect for logged-out visitors. We still track
+  // auth state so the AI analysis, save, and existing-analysis fetch can
+  // gate themselves on `user` being present.
   useEffect(() => {
     const supabase = createBrowserClient()
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) {
-        router.push('/landing')
-        return
-      }
-      setUser(data.user)
+      setUser(data.user ?? null)
       setAuthChecked(true)
     })
-  }, [router])
+  }, [])
+
+  async function handleShare() {
+    const url = `${window.location.origin}/products/${productId}`
+    try {
+      await navigator.clipboard.writeText(url)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    } catch {
+      // clipboard access denied — silently ignore
+    }
+  }
 
   useEffect(() => {
     if (!authChecked || !productId) return
@@ -162,6 +183,7 @@ export default function ProductDetailPage() {
   const trend = trendConfig[product.trend_label] ?? trendConfig['Rising']
   const saved = savedIds.has(product.id)
   const launchoryScore = computeLaunchoryScore(product)
+  const adActivityLevel = getAdActivityLevel(product.trend_label)
 
   return (
     <AppLayout user={user}>
@@ -188,13 +210,31 @@ export default function ProductDetailPage() {
       <Toast message={toastMessage} />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-gray-400 hover:text-white text-sm font-medium mb-6 transition-colors"
-        >
-          <ArrowLeft size={16} />
-          Back to dashboard
-        </Link>
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-gray-400 hover:text-white text-sm font-medium transition-colors"
+          >
+            <ArrowLeft size={16} />
+            Back to dashboard
+          </Link>
+          <button
+            onClick={handleShare}
+            className="inline-flex items-center gap-2 bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-gray-600 text-gray-300 text-sm font-medium px-3.5 py-2 rounded-lg transition-colors shrink-0"
+          >
+            {linkCopied ? (
+              <>
+                <Check size={15} className="text-emerald-400" />
+                Link copied!
+              </>
+            ) : (
+              <>
+                <Share2 size={15} />
+                Share
+              </>
+            )}
+          </button>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
           <div className="lg:col-span-2">
@@ -248,17 +288,32 @@ export default function ProductDetailPage() {
                 View Supplier
               </a>
 
-              <button
-                onClick={() => toggleSave(product.id)}
-                className={`w-full inline-flex items-center justify-center gap-2 text-sm font-semibold py-3 rounded-xl transition-colors border ${
-                  saved
-                    ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/30 hover:bg-indigo-600/30'
-                    : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700'
-                }`}
-              >
-                <Bookmark size={15} className={saved ? 'fill-indigo-400' : ''} />
-                {saved ? 'Saved' : 'Save Product'}
-              </button>
+              {user ? (
+                <button
+                  onClick={() => toggleSave(product.id)}
+                  className={`w-full inline-flex items-center justify-center gap-2 text-sm font-semibold py-3 rounded-xl transition-colors border ${
+                    saved
+                      ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/30 hover:bg-indigo-600/30'
+                      : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700'
+                  }`}
+                >
+                  <Bookmark size={15} className={saved ? 'fill-indigo-400' : ''} />
+                  {saved ? 'Saved' : 'Save Product'}
+                </button>
+              ) : (
+                <div className="relative w-full group">
+                  <Link
+                    href="/auth/signup"
+                    className="w-full inline-flex items-center justify-center gap-2 text-sm font-semibold py-3 rounded-xl transition-colors border bg-gray-800/60 text-gray-500 border-gray-800"
+                  >
+                    <Lock size={14} />
+                    Save Product
+                  </Link>
+                  <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-800 border border-gray-700 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    Sign up to save products
+                  </span>
+                </div>
+              )}
 
               <div className="w-full border-t border-gray-800 pt-5">
                 <p className="text-gray-500 text-xs uppercase tracking-wider font-medium mb-3">Or search other suppliers</p>
@@ -275,7 +330,26 @@ export default function ProductDetailPage() {
             <h2 className="text-xl font-bold text-white">AI Analysis</h2>
           </div>
 
-          {displayedAnalysis ? (
+          {!user ? (
+            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 text-center">
+              <div className="w-14 h-14 bg-indigo-600/15 border border-indigo-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Lock size={22} className="text-indigo-400" />
+              </div>
+              <p className="text-white font-semibold mb-1.5 max-w-sm mx-auto">
+                Sign up free to see AI analysis, ad angles, hooks, and more
+              </p>
+              <p className="text-gray-500 text-sm mb-6">
+                Get instant demand scores, competition analysis, and ready-to-use ad angles for every product.
+              </p>
+              <Link
+                href="/auth/signup"
+                className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-5 py-3 rounded-xl transition-colors"
+              >
+                <Zap size={15} />
+                Get Free Analysis
+              </Link>
+            </div>
+          ) : displayedAnalysis ? (
             <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-6">
               <AnalysisResultView result={displayedAnalysis} />
               <button
@@ -305,10 +379,46 @@ export default function ProductDetailPage() {
           )}
         </div>
 
+        {/* Live Ads */}
+        <div className="mb-12">
+          <div className="flex items-center gap-2 mb-5">
+            <ThumbsUp size={18} className="text-indigo-400" />
+            <h2 className="text-xl font-bold text-white">Live Ads Running for This Product</h2>
+          </div>
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+            <p className="text-gray-400 text-sm mb-5">
+              Based on our analysis, this product has{' '}
+              <span className="font-semibold text-white">{adActivityLevel}</span> ad activity on Facebook and TikTok.
+            </p>
+            <AdSearchButtons title={product.title} />
+            <div className="mt-5 flex items-start gap-3 p-4 bg-indigo-600/10 border border-indigo-500/20 rounded-xl">
+              <Lightbulb size={16} className="text-indigo-400 mt-0.5 shrink-0" />
+              <p className="text-gray-300 text-sm leading-relaxed">
+                <span className="font-semibold text-white">Pro Tip:</span> Open the Facebook Ad Library, filter by your country, and look for ads that have been running for 30+ days — those are the profitable ones.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Profit calculator CTA */}
+        <Link
+          href={`/calculator?product=${encodeURIComponent(product.title)}&cost=${SUGGESTED_PRODUCT_COST}`}
+          className="flex items-center gap-3 bg-gradient-to-r from-indigo-600/15 to-gray-900 border border-indigo-500/20 hover:border-indigo-500/40 rounded-2xl px-6 py-5 mb-12 transition-colors"
+        >
+          <div className="w-10 h-10 bg-indigo-600/20 rounded-lg flex items-center justify-center shrink-0">
+            <Calculator size={18} className="text-indigo-400" />
+          </div>
+          <p className="text-white text-sm font-medium">
+            Want to know if this is profitable? Try our profit calculator &rarr;
+          </p>
+        </Link>
+
         {/* Related products */}
         {relatedProducts.length > 0 && (
           <div>
-            <h2 className="text-xl font-bold text-white mb-5">More in {product.niche}</h2>
+            <h2 className="text-xl font-bold text-white mb-5">
+              {user ? `More in ${product.niche}` : 'More winning products'}
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatedProducts.map((related) => (
                 <ProductCard
@@ -320,6 +430,20 @@ export default function ProductDetailPage() {
                 />
               ))}
             </div>
+            {!user && (
+              <div className="mt-6 bg-gradient-to-br from-indigo-600/15 to-gray-900 border border-indigo-500/30 rounded-2xl p-8 text-center">
+                <p className="text-white font-semibold mb-1.5">See all 150+ winning products</p>
+                <p className="text-gray-400 text-sm mb-5">
+                  Sign up free to browse the full feed, run AI analysis, and generate ad creatives.
+                </p>
+                <Link
+                  href="/auth/signup"
+                  className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-5 py-3 rounded-xl transition-colors"
+                >
+                  Sign Up Free
+                </Link>
+              </div>
+            )}
           </div>
         )}
       </div>
