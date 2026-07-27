@@ -5,6 +5,7 @@ import { X, Zap, AlertCircle, Share2, Check } from 'lucide-react'
 import { AnalysisResultView } from '@/app/components/AnalysisResultView'
 import { AdGenerator } from '@/app/components/AdGenerator'
 import { SupplierQuickLinks } from '@/app/components/SupplierQuickLinks'
+import { AdSearchButtons } from '@/app/components/AdSearchButtons'
 import type { Product, AnalysisResult } from '@/app/types'
 
 export function AnalysisModal({
@@ -99,8 +100,9 @@ export function AnalysisModal({
             <>
               <AnalysisResultView result={result} />
               <div>
-                <p className="text-gray-500 text-xs uppercase tracking-wider font-medium mb-3">Find this product from a supplier</p>
-                <SupplierQuickLinks title={product.title} />
+                <p className="text-gray-500 text-xs uppercase tracking-wider font-medium mb-3">Find suppliers &amp; live ads</p>
+                <SupplierQuickLinks title={product.title} className="flex flex-wrap gap-2 mb-3" />
+                <AdSearchButtons title={product.title} />
               </div>
               <AdGenerator product={product} adAngles={result.ad_angles} onLimitReached={onAdLimitReached} />
             </>
