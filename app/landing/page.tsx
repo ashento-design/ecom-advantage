@@ -3,9 +3,16 @@ import dynamic from 'next/dynamic'
 import type { Metadata } from 'next'
 import {
   Rocket, ArrowRight, TrendingUp, Zap, Target, Megaphone,
-  DollarSign, Search, Flame, Bookmark, Package, Star,
+  DollarSign, Search, Flame, Bookmark, Package,
 } from 'lucide-react'
 import { ReferralCapture } from '@/app/components/ReferralCapture'
+import { TestimonialCard, type TestimonialData } from '@/app/components/TestimonialCard'
+import { getServiceRoleClient } from '@/app/lib/supabaseAdmin'
+
+// Testimonials rarely change, so a short revalidation window keeps the
+// landing page mostly static (fast, cacheable) while still picking up
+// admin edits within a few minutes instead of requiring a full rebuild.
+export const revalidate = 300
 
 // Below-the-fold and heavier client components — code-split them out of
 // the initial bundle so the hero becomes interactive faster. Both still
@@ -39,29 +46,21 @@ const features = [
   { icon: DollarSign, title: 'Pricing Suggestions', description: 'AI-recommended price ranges based on margin and market data.' },
 ]
 
-const testimonials = [
-  {
-    initials: 'JM',
-    name: 'Jake M.',
-    role: 'Shopify store owner',
-    quote: 'Found a winning product in my first week and it did $8k in sales the first month. The AI analysis alone saved me hours of manual research per product.',
-    color: 'bg-indigo-600',
-  },
-  {
-    initials: 'ST',
-    name: 'Sarah T.',
-    role: '7-figure dropshipper',
-    quote: 'I was skeptical about another "winning products" tool, but the ad angle suggestions are genuinely useful — I\'ve used three of them almost word-for-word in live campaigns.',
-    color: 'bg-emerald-600',
-  },
-  {
-    initials: 'DK',
-    name: 'David K.',
-    role: 'Started dropshipping 6 months ago',
-    quote: 'As a beginner, the demand scores and competition breakdown took the guesswork out of picking products. I finally stopped wasting ad spend testing duds.',
-    color: 'bg-orange-600',
-  },
-]
+async function getFeaturedTestimonials(): Promise<TestimonialData[]> {
+  try {
+    const supabaseAdmin = getServiceRoleClient()
+    const { data, error } = await supabaseAdmin
+      .from('testimonials')
+      .select('name, role, company, content, rating, avatar_initials')
+      .eq('is_featured', true)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data ?? []
+  } catch (err) {
+    console.error('[landing] Failed to fetch testimonials:', err)
+    return []
+  }
+}
 
 const steps = [
   { number: '1', title: 'Find a product', description: 'Browse today’s curated feed of trending Shopify products.' },
@@ -69,7 +68,9 @@ const steps = [
   { number: '3', title: 'Get instant insights', description: 'Demand score, competition level, pricing, ad angles, and hooks — instantly.' },
 ]
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const testimonials = await getFeaturedTestimonials()
+
   return (
     <div className="min-h-screen bg-gray-950">
       <ReferralCapture />
@@ -235,33 +236,19 @@ export default function LandingPage() {
       </section>
 
       {/* Social proof */}
-      <section className="max-w-6xl mx-auto px-6 py-24">
-        <div className="text-center mb-14">
-          <h2 className="text-3xl font-bold text-white mb-3">Trusted by dropshippers worldwide</h2>
-          <p className="text-gray-400">Real results from real stores.</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-          {testimonials.map((t) => (
-            <div key={t.name} className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-gray-600 transition-colors">
-              <div className="flex items-center gap-0.5 mb-4">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} size={14} className="text-amber-400 fill-amber-400" />
-                ))}
-              </div>
-              <p className="text-gray-300 text-sm leading-relaxed mb-5">&ldquo;{t.quote}&rdquo;</p>
-              <div className="flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-full ${t.color} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
-                  {t.initials}
-                </div>
-                <div>
-                  <p className="text-white text-sm font-semibold">{t.name}</p>
-                  <p className="text-gray-500 text-xs">{t.role}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      {testimonials.length > 0 && (
+        <section className="max-w-6xl mx-auto px-6 py-24">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl font-bold text-white mb-3">Trusted by dropshippers worldwide</h2>
+            <p className="text-gray-400">Real results from real stores.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+            {testimonials.map((t) => (
+              <TestimonialCard key={`${t.name}-${t.avatar_initials}`} testimonial={t} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* How it works */}
       <section className="max-w-6xl mx-auto px-6 py-24">
