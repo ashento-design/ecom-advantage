@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Rocket, LayoutDashboard, Bookmark, Image as ImageIcon, Search, PlusCircle,
-  Clock, HelpCircle, User, Gift, ChevronsLeft, ChevronsRight, ShieldCheck, LogOut,
+  Clock, HelpCircle, User, Gift, ChevronsLeft, ChevronsRight, ShieldCheck, LogOut, Calculator,
 } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { SearchModal } from '@/app/components/SearchModal'
@@ -21,6 +21,7 @@ const MAIN_NAV: NavItem[] = [
   { href: '/saved', label: 'Saved Products', icon: Bookmark },
   { href: '/ads', label: 'My Ads', icon: ImageIcon },
   { href: '/store-intelligence', label: 'Store Intelligence', icon: Search },
+  { href: '/calculator', label: 'Calculator', icon: Calculator },
   { href: '/request', label: 'Request a Product', icon: PlusCircle },
   { href: '/changelog', label: 'Changelog', icon: Clock },
   { href: '/help', label: 'Help', icon: HelpCircle },
@@ -85,7 +86,7 @@ export function AppLayout({ user, children }: { user: SupabaseUser | null; child
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1') setCollapsed(true)
+    if (localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1') Promise.resolve().then(() => setCollapsed(true))
   }, [])
 
   function toggleCollapsed() {
