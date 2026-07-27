@@ -194,3 +194,60 @@ export async function sendBreakoutAlertEmail(to: string, name: string, product: 
     html,
   })
 }
+
+type WaitlistEmailParams = {
+  position: number
+  referralCode: string
+  referralCount: number
+  siteUrl: string
+}
+
+export async function sendWaitlistConfirmationEmail(to: string, name: string | null | undefined, params: WaitlistEmailParams) {
+  const resend = getResendClient()
+  const firstName = name?.split(' ')[0] || 'there'
+  const referralLink = `${params.siteUrl}/waitlist?ref=${params.referralCode}`
+  const tweetText = `I just joined the Launchory waitlist — AI-powered product research for Shopify dropshippers. Locking in founding member pricing at $19/mo before launch 🚀`
+  const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(referralLink)}`
+
+  const html = emailShell(`
+    <h1 style="color:#ffffff; font-size:20px; margin:0 0 12px 0;">You're on the list, ${firstName}! 🚀</h1>
+    <p style="margin:0 0 16px 0;">
+      You're <strong style="color:#ffffff;">#${params.position}</strong> on the Launchory waitlist. We're launching Fall 2026, and joining now locks in founding member pricing:
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px 0; background-color:#1f2937; border-radius:12px;">
+      <tr>
+        <td style="padding:16px 20px;">
+          <p style="margin:0; color:#818cf8; font-size:24px; font-weight:800;">$19<span style="font-size:14px; color:#9ca3af; font-weight:500;">/mo</span></p>
+          <p style="margin:2px 0 0 0; color:#9ca3af; font-size:12px;">Locked in forever — regular price at launch is $29/mo</p>
+        </td>
+      </tr>
+    </table>
+
+    <h2 style="color:#ffffff; font-size:15px; margin:0 0 8px 0;">Want to move up the list?</h2>
+    <p style="margin:0 0 12px 0;">
+      Founding member spots are limited, and top referrers get bumped to the front of the line. You've referred
+      <strong style="color:#ffffff;">${params.referralCount}</strong> ${params.referralCount === 1 ? 'person' : 'people'} so far.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px 0; background-color:#1f2937; border-radius:10px;">
+      <tr>
+        <td style="padding:12px 16px; color:#a5b4fc; font-size:13px; word-break:break-all;">
+          ${referralLink}
+        </td>
+      </tr>
+    </table>
+
+    ${button('Share on X / Twitter', tweetUrl)}
+
+    <p style="margin:20px 0 0 0; color:#6b7280; font-size:13px;">
+      Or copy this and share anywhere:<br />
+      <span style="color:#9ca3af;">&ldquo;${tweetText}&rdquo;</span>
+    </p>
+  `)
+
+  return resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "You're on the Launchory waitlist! 🚀",
+    html,
+  })
+}
