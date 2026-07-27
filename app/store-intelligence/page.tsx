@@ -6,7 +6,7 @@ import {
   Search, Lock, Sparkles,
 } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
-import { Navbar } from '@/app/components/Navbar'
+import { AppLayout } from '@/app/components/AppLayout'
 import { UpgradeModal } from '@/app/components/UpgradeModal'
 import { StoreAnalysisCard, type StoreAnalysis } from '@/app/components/StoreAnalysisCard'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
@@ -141,11 +141,10 @@ export default function StoreIntelligencePage() {
 
   if (!isPro) {
     return (
-      <div className="min-h-screen bg-gray-950">
+      <AppLayout user={user}>
         {showUpgradeModal && (
           <UpgradeModal onClose={() => setShowUpgradeModal(false)} onUpgrade={handleUpgrade} upgrading={upgrading} error={null} />
         )}
-        <Navbar user={user} />
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-24 text-center">
           <div className="w-16 h-16 bg-indigo-600/15 border border-indigo-500/30 rounded-full flex items-center justify-center mx-auto mb-6">
             <Lock size={26} className="text-indigo-400" />
@@ -162,13 +161,12 @@ export default function StoreIntelligencePage() {
             Upgrade to Pro
           </button>
         </div>
-      </div>
+      </AppLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      <Navbar user={user} />
+    <AppLayout user={user}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-16">
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 mb-3">
@@ -266,6 +264,6 @@ export default function StoreIntelligencePage() {
           </div>
         )}
       </div>
-    </div>
+    </AppLayout>
   )
 }

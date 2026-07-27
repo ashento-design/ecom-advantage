@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Zap, CheckCircle, Check, User, Mail, Lock } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
-import { Navbar } from '@/app/components/Navbar'
+import { AppLayout } from '@/app/components/AppLayout'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 type EmailPreferences = {
@@ -117,9 +117,7 @@ export default function AccountPage() {
   const emailPreferences = profile?.email_preferences ?? DEFAULT_EMAIL_PREFERENCES
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      <Navbar user={user} />
-
+    <AppLayout user={user}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
           href="/"
@@ -287,6 +285,6 @@ export default function AccountPage() {
           </div>
         )}
       </div>
-    </div>
+    </AppLayout>
   )
 }

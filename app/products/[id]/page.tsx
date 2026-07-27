@@ -11,7 +11,7 @@ import { useSavedProducts } from '@/app/lib/useSavedProducts'
 import { useProductAnalysis } from '@/app/lib/useProductAnalysis'
 import { useToast } from '@/app/lib/useToast'
 import { computeLaunchoryScore } from '@/app/lib/launchoryScore'
-import { Navbar } from '@/app/components/Navbar'
+import { AppLayout } from '@/app/components/AppLayout'
 import { ProductCard } from '@/app/components/ProductCard'
 import { ScoreRing } from '@/app/components/ScoreRing'
 import { AnalysisModal } from '@/app/components/AnalysisModal'
@@ -118,8 +118,7 @@ export default function ProductDetailPage() {
 
   if (!authChecked || loading) {
     return (
-      <div className="min-h-screen bg-gray-950">
-        <Navbar user={user} />
+      <AppLayout user={user}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="h-5 w-32 bg-gray-900 rounded mb-6 animate-pulse" />
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
@@ -138,14 +137,13 @@ export default function ProductDetailPage() {
           </div>
           <div className="h-64 rounded-2xl bg-gray-900 border border-gray-800 animate-pulse" />
         </div>
-      </div>
+      </AppLayout>
     )
   }
 
   if (notFound || !product) {
     return (
-      <div className="min-h-screen bg-gray-950">
-        <Navbar user={user} />
+      <AppLayout user={user}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
           <h1 className="text-white font-bold text-xl mb-2">Product not found</h1>
           <p className="text-gray-500 text-sm mb-6">This product may have been removed.</p>
@@ -157,7 +155,7 @@ export default function ProductDetailPage() {
             Back to dashboard
           </Link>
         </div>
-      </div>
+      </AppLayout>
     )
   }
 
@@ -166,7 +164,7 @@ export default function ProductDetailPage() {
   const launchoryScore = computeLaunchoryScore(product)
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <AppLayout user={user}>
       {selectedProduct && (
         <AnalysisModal
           product={selectedProduct}
@@ -188,8 +186,6 @@ export default function ProductDetailPage() {
       )}
 
       <Toast message={toastMessage} />
-
-      <Navbar user={user} />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
@@ -327,6 +323,6 @@ export default function ProductDetailPage() {
           </div>
         )}
       </div>
-    </div>
+    </AppLayout>
   )
 }

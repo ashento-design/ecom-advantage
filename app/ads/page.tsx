@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Sparkles, Download, Trash2, Zap } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
-import { Navbar } from '@/app/components/Navbar'
+import { AppLayout } from '@/app/components/AppLayout'
 import type { AdFormat } from '@/app/types'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
@@ -93,9 +93,7 @@ export default function AdsGalleryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      <Navbar user={user} />
-
+    <AppLayout user={user}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
           href="/"
@@ -174,6 +172,6 @@ export default function AdsGalleryPage() {
           </div>
         )}
       </div>
-    </div>
+    </AppLayout>
   )
 }

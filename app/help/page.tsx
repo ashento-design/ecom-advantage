@@ -1,8 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import Link from 'next/link'
-import { Rocket, Search, ChevronDown, Mail } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Search, ChevronDown, Mail } from 'lucide-react'
+import { createBrowserClient } from '@/app/lib/supabase'
+import { AppLayout } from '@/app/components/AppLayout'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 type HelpArticle = {
   category: string
@@ -106,9 +108,15 @@ const ARTICLES: HelpArticle[] = [
 ]
 
 export default function HelpCenterPage() {
+  const [user, setUser] = useState<SupabaseUser | null>(null)
   const [query, setQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState<string>('All')
   const [openQuestions, setOpenQuestions] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    const supabase = createBrowserClient()
+    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+  }, [])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -129,15 +137,8 @@ export default function HelpCenterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <AppLayout user={user}>
       <div className="max-w-3xl mx-auto px-6 pt-16 pb-24">
-        <Link href="/landing" className="inline-flex items-center gap-2 mb-10">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-            <Rocket size={18} className="text-white" />
-          </div>
-          <span className="font-bold text-white text-lg">Launchory</span>
-        </Link>
-
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold text-white mb-3">Help Center</h1>
           <p className="text-gray-400">Answers to the most common questions about Launchory.</p>
@@ -216,6 +217,6 @@ export default function HelpCenterPage() {
           </a>
         </div>
       </div>
-    </div>
+    </AppLayout>
   )
 }

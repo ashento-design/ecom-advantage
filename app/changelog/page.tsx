@@ -1,10 +1,11 @@
-import Link from 'next/link'
 import type { Metadata } from 'next'
 import {
-  Rocket, ArrowLeft, Sparkles, Puzzle, TrendingUp, Zap, Video,
+  Sparkles, Puzzle, TrendingUp, Zap, Video,
   ShoppingCart, Smartphone, Users, Lock,
 } from 'lucide-react'
 import { StoreIntelligenceChangelogEntry } from '@/app/components/StoreIntelligenceChangelogEntry'
+import { AppLayout } from '@/app/components/AppLayout'
+import { createServerClient } from '@/app/lib/supabase'
 
 export const metadata: Metadata = {
   title: 'Changelog',
@@ -66,27 +67,12 @@ const comingSoon = [
   { icon: Users, title: 'Affiliate Program', description: 'Earn 30% recurring commission.' },
 ]
 
-export default function ChangelogPage() {
-  return (
-    <div className="min-h-screen bg-gray-950">
-      <nav className="border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-              <Rocket size={18} className="text-white" />
-            </div>
-            <span className="font-bold text-white text-lg">Launchory</span>
-          </Link>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-white text-sm font-medium transition-colors"
-          >
-            <ArrowLeft size={16} />
-            Back to app
-          </Link>
-        </div>
-      </nav>
+export default async function ChangelogPage() {
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
+  return (
+    <AppLayout user={user}>
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16">
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 mb-3">
@@ -162,6 +148,6 @@ export default function ChangelogPage() {
           </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   )
 }

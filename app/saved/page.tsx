@@ -8,7 +8,7 @@ import { createBrowserClient } from '@/app/lib/supabase'
 import { useSavedProducts } from '@/app/lib/useSavedProducts'
 import { useProductAnalysis } from '@/app/lib/useProductAnalysis'
 import { useToast } from '@/app/lib/useToast'
-import { Navbar } from '@/app/components/Navbar'
+import { AppLayout } from '@/app/components/AppLayout'
 import { ProductCard, ProductCardSkeleton } from '@/app/components/ProductCard'
 import { AnalysisModal } from '@/app/components/AnalysisModal'
 import { UpgradeModal } from '@/app/components/UpgradeModal'
@@ -78,7 +78,7 @@ export default function SavedPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <AppLayout user={user}>
       {selectedProduct && (
         <AnalysisModal
           product={selectedProduct}
@@ -100,8 +100,6 @@ export default function SavedPage() {
       )}
 
       <Toast message={toastMessage} />
-
-      <Navbar user={user} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
@@ -149,6 +147,6 @@ export default function SavedPage() {
           </div>
         )}
       </div>
-    </div>
+    </AppLayout>
   )
 }

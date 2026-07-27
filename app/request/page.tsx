@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, PackagePlus, CheckCircle } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
-import { Navbar } from '@/app/components/Navbar'
+import { AppLayout } from '@/app/components/AppLayout'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 export default function RequestProductPage() {
@@ -63,8 +63,7 @@ export default function RequestProductPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      <Navbar user={user} />
+    <AppLayout user={user}>
       <div className="max-w-xl mx-auto px-4 sm:px-6 py-12">
         <Link
           href="/"
@@ -170,6 +169,6 @@ export default function RequestProductPage() {
           </form>
         )}
       </div>
-    </div>
+    </AppLayout>
   )
 }

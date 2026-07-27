@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Gift, Copy, Check, Users } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
-import { Navbar } from '@/app/components/Navbar'
+import { AppLayout } from '@/app/components/AppLayout'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 export default function ReferralPage() {
@@ -57,8 +57,7 @@ export default function ReferralPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950">
-      <Navbar user={user} />
+    <AppLayout user={user}>
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12">
         <div className="flex items-center gap-2 mb-2">
           <Gift size={18} className="text-indigo-400" />
@@ -121,6 +120,6 @@ export default function ReferralPage() {
           </div>
         )}
       </div>
-    </div>
+    </AppLayout>
   )
 }
