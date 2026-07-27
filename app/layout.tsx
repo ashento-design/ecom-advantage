@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { NavigationProgressBar } from "@/app/components/NavigationProgressBar";
+import { AnalyticsPageViewTracker } from "@/app/components/AnalyticsPageViewTracker";
 import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"] });
@@ -36,7 +38,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geist.className} bg-gray-950 text-white antialiased`}>
         <NavigationProgressBar />
+        <AnalyticsPageViewTracker />
         {children}
+        <Analytics />
       </body>
     </html>
   );

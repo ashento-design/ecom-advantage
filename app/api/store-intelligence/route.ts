@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 import { createServerClient } from '@/app/lib/supabase'
 import { parseSafeStoreUrl } from '@/app/lib/urlSafety'
+import { trackEvent } from '@/app/lib/analytics'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
@@ -319,6 +320,8 @@ Return exactly this JSON structure:
   } catch (err) {
     console.error('[store-intelligence] Failed to save analysis (still returning result):', err)
   }
+
+  await trackEvent('store_analyzed', { userId: user.id, metadata: { store: storeUrl.hostname } })
 
   return Response.json(analysis)
 }

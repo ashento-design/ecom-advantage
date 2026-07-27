@@ -1,5 +1,6 @@
 import OpenAI from 'openai'
 import { createServerClient } from '@/app/lib/supabase'
+import { trackEvent } from '@/app/lib/analytics'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
@@ -96,6 +97,8 @@ Return exactly this JSON structure:
       console.error('Failed to persist analysis:', insertError.message)
     }
   }
+
+  await trackEvent('product_analyzed', { userId: user.id, metadata: { product_id } })
 
   return Response.json(result)
 }

@@ -3,6 +3,7 @@ import OpenAI, { toFile } from 'openai'
 import { createServerClient } from '@/app/lib/supabase'
 import { getServiceRoleClient } from '@/app/lib/supabaseAdmin'
 import { parseSafeStoreUrl } from '@/app/lib/urlSafety'
+import { trackEvent } from '@/app/lib/analytics'
 import type { AdFormat, AdStyle } from '@/app/types'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
@@ -290,6 +291,8 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error('[generate-ad] Failed to increment ads_generated (image still returned to client):', err)
   }
+
+  await trackEvent('ad_generated', { userId: user.id, metadata: { format, style } })
 
   return Response.json({
     id: adId,

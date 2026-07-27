@@ -1,6 +1,7 @@
 import Stripe from 'stripe'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/app/lib/supabase'
+import { trackEvent } from '@/app/lib/analytics'
 
 export async function POST(request: NextRequest) {
   const secretKey = process.env.STRIPE_SECRET_KEY
@@ -46,6 +47,8 @@ export async function POST(request: NextRequest) {
       console.error('Stripe checkout session created without a URL', session.id)
       return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 })
     }
+
+    await trackEvent('upgrade_clicked', { userId: user.id })
 
     return NextResponse.json({ url: session.url })
   } catch (err) {
