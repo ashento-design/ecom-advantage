@@ -5,6 +5,13 @@ import { getSubscriberStanding } from '@/app/lib/waitlist'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+/**
+ * POST /api/waitlist/subscribe
+ * Public — no auth required. Body: { email, name?, source?, ref? }.
+ * Validates and dedupes the email, attributes it to a referrer if `ref`
+ * resolves to an existing subscriber's code, sends the confirmation email,
+ * and returns the caller's position on the list.
+ */
 export async function POST(request: Request) {
   let email: string, name: string | null, source: string | null, ref: string | null
   try {

@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getAdminUser, getSupabaseAdmin } from '@/app/lib/adminAuth'
 
+/**
+ * PATCH /api/admin/requests/[id]
+ * Admin auth required. Approves or rejects a user-submitted product
+ * request. Body: { status: 'approved' | 'rejected' }.
+ */
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const admin = await getAdminUser()
   if (!admin) {

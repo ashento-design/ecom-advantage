@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getSupabaseAdmin } from '@/app/lib/adminAuth'
 
+/**
+ * PATCH /api/admin/products/[id]
+ * Admin auth required. Updates a product listing.
+ */
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const admin = await getAdminUser()
   if (!admin) {
@@ -32,6 +36,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   return NextResponse.json(data)
 }
 
+/**
+ * DELETE /api/admin/products/[id]
+ * Admin auth required. Permanently deletes a product listing.
+ */
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const admin = await getAdminUser()
   if (!admin) {

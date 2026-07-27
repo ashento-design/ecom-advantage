@@ -6,6 +6,13 @@ import { getServiceRoleClient } from '@/app/lib/supabaseAdmin'
 const MAX_BYTES = 8 * 1024 * 1024 // 8MB
 const BUCKET = 'product-images'
 
+/**
+ * POST /api/upload
+ * Auth required. Uploads an image to Supabase Storage and returns its
+ * public URL. Body: { imageBase64 } (data: URI or raw base64) or
+ * { imageUrl } (fetched server-side), plus optional { folder: 'ads' |
+ * 'products' }. Max 8MB.
+ */
 export async function POST(request: NextRequest) {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()

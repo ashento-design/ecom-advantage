@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getSupabaseAdmin } from '@/app/lib/adminAuth'
 
+/**
+ * POST /api/admin/products
+ * Admin auth required. Creates a new product listing.
+ * Body: { title, description, image_url, niche, supplier_url,
+ * demand_score, trend_label, is_featured? }. title and niche are required.
+ */
 export async function POST(request: NextRequest) {
   const admin = await getAdminUser()
   if (!admin) {

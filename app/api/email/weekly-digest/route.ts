@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/app/lib/adminAuth'
 import { sendWeeklyDigest } from '@/app/lib/digest'
 
+/**
+ * POST /api/email/weekly-digest
+ * Admin auth required — manual trigger for the same digest send the
+ * weekly-digest cron runs automatically. Sends the top 5 products to every
+ * opted-in user.
+ */
 export async function POST(request: Request) {
   const admin = await getAdminUser()
   if (!admin) {

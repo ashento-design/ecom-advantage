@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server'
 import { getAdminUser } from '@/app/lib/adminAuth'
 import { maybeSendBreakoutAlert } from '@/app/lib/digest'
 
+/**
+ * POST /api/email/breakout-alert
+ * Admin auth required — manual trigger to (re-)check whether a product
+ * should fire a breakout alert. Body: { product_id }.
+ */
 export async function POST(request: Request) {
   const admin = await getAdminUser()
   if (!admin) {

@@ -3,6 +3,12 @@ import { sendWelcomeEmail } from '@/app/lib/email'
 import { createServerClient } from '@/app/lib/supabase'
 import { getServiceRoleClient } from '@/app/lib/supabaseAdmin'
 
+/**
+ * POST /api/email/welcome
+ * Public (fired client-side right after signup). Body: { email, name? }.
+ * Sends the welcome email — email 1 of the onboarding drip sequence — and
+ * records it in onboarding_emails so the drip cron doesn't re-send it.
+ */
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null)
   const email = body?.email

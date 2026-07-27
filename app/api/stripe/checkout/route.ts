@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/app/lib/supabase'
 import { trackEvent } from '@/app/lib/analytics'
 
+/**
+ * POST /api/stripe/checkout
+ * Auth required. Creates a Stripe Checkout session for the Pro
+ * subscription and returns its redirect URL.
+ */
 export async function POST(request: NextRequest) {
   const secretKey = process.env.STRIPE_SECRET_KEY
   const priceId = process.env.STRIPE_PRICE_ID

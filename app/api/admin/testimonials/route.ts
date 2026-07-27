@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminUser, getSupabaseAdmin } from '@/app/lib/adminAuth'
 
+/**
+ * GET /api/admin/testimonials
+ * Admin auth required. Lists every testimonial (featured and hidden).
+ */
 export async function GET() {
   const admin = await getAdminUser()
   if (!admin) {
@@ -26,6 +30,11 @@ export async function GET() {
   return NextResponse.json(data)
 }
 
+/**
+ * POST /api/admin/testimonials
+ * Admin auth required. Creates a testimonial. Body: { name, role?,
+ * company?, content, rating?, avatar_initials, is_featured? }.
+ */
 export async function POST(request: NextRequest) {
   const admin = await getAdminUser()
   if (!admin) {

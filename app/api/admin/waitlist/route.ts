@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getAdminUser, getSupabaseAdmin } from '@/app/lib/adminAuth'
 
+/**
+ * GET /api/admin/waitlist
+ * Admin auth required. Lists every waitlist subscriber for the admin
+ * Waitlist table / CSV export.
+ */
 export async function GET() {
   const admin = await getAdminUser()
   if (!admin) {

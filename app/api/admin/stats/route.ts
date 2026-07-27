@@ -3,6 +3,11 @@ import { getAdminUser, getSupabaseAdmin } from '@/app/lib/adminAuth'
 
 const PRO_MONTHLY_PRICE = 29
 
+/**
+ * GET /api/admin/stats
+ * Admin auth required. Top-line dashboard totals: products, users,
+ * analyses run, Pro users, estimated MRR, ads generated.
+ */
 export async function GET() {
   const admin = await getAdminUser()
   if (!admin) {

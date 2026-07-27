@@ -107,6 +107,11 @@ async function fetchTrafficSignals(hostname: string): Promise<string | null> {
   return signals.length > 0 ? signals.join('\n') : null
 }
 
+/**
+ * GET /api/store-intelligence
+ * Auth required, Pro plan required. Lists the caller's last 5 saved store
+ * analyses.
+ */
 export async function GET() {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -129,6 +134,12 @@ export async function GET() {
   return Response.json(data)
 }
 
+/**
+ * POST /api/store-intelligence
+ * Auth required, Pro plan required. Scrapes a Shopify store's public
+ * storefront data and runs an AI revenue/competitor analysis. Body:
+ * { storeUrl }.
+ */
 export async function POST(request: Request) {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()

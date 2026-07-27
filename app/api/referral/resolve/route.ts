@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getServiceRoleClient } from '@/app/lib/supabaseAdmin'
 
+/**
+ * GET /api/referral/resolve?code=<code>
+ * Public — no auth required. Looks up which user a referral code belongs
+ * to, so signup can attribute the new account to its referrer.
+ */
 export async function GET(request: Request) {
   const code = new URL(request.url).searchParams.get('code')?.trim().toUpperCase()
   if (!code) {

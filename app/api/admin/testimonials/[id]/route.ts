@@ -3,6 +3,11 @@ import { getAdminUser, getSupabaseAdmin } from '@/app/lib/adminAuth'
 
 const ALLOWED_FIELDS = ['name', 'role', 'company', 'content', 'rating', 'avatar_initials', 'is_featured'] as const
 
+/**
+ * PATCH /api/admin/testimonials/[id]
+ * Admin auth required. Partial update — any subset of ALLOWED_FIELDS,
+ * commonly just { is_featured } for the featured toggle.
+ */
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const admin = await getAdminUser()
   if (!admin) {
@@ -41,6 +46,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   return NextResponse.json(data)
 }
 
+/**
+ * DELETE /api/admin/testimonials/[id]
+ * Admin auth required. Permanently deletes a testimonial.
+ */
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const admin = await getAdminUser()
   if (!admin) {

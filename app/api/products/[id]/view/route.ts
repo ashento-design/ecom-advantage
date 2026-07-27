@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServiceRoleClient } from '@/app/lib/supabaseAdmin'
 import { maybeSendBreakoutAlert } from '@/app/lib/digest'
 
+/**
+ * POST /api/products/[id]/view
+ * Public — no auth required. Increments a product's view counter and,
+ * best-effort, fires a breakout alert email if this crosses the view
+ * threshold for the first time.
+ */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 

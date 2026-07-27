@@ -7,6 +7,12 @@ type UnsplashPhoto = {
   alt_description?: string | null
 }
 
+/**
+ * GET /api/admin/unsplash-search?q=<query>
+ * Admin auth required. Proxies the Unsplash search API for the product
+ * form's image-suggestion grid. Returns 501 if UNSPLASH_ACCESS_KEY isn't
+ * configured.
+ */
 export async function GET(request: NextRequest) {
   const admin = await getAdminUser()
   if (!admin) {

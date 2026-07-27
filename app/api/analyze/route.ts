@@ -6,6 +6,12 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 const FREE_ANALYSIS_LIMIT = 3
 
+/**
+ * POST /api/analyze
+ * Auth required. Runs an AI demand/competition analysis on a product.
+ * Body: { product_id?, title, description, niche }. Free plan is capped at
+ * 3 total analyses (403 `limit_reached` once exceeded).
+ */
 export async function POST(request: Request) {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()

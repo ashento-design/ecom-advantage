@@ -108,6 +108,12 @@ async function loadReferenceImage(referenceImageUrl: string): Promise<{ buffer: 
   }
 }
 
+/**
+ * POST /api/generate-ad
+ * Auth required. Generates an AI ad creative image via gpt-image-1. Body:
+ * { product_id, title, description, ad_angle, format, style,
+ * referenceImageUrl? }. Free plan is capped at 1 total ad generation.
+ */
 export async function POST(request: Request) {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()

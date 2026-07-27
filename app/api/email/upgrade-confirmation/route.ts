@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendUpgradeConfirmationEmail } from '@/app/lib/email'
 
+/**
+ * POST /api/email/upgrade-confirmation
+ * Public (fired client-side right after a successful Stripe upgrade).
+ * Body: { email, name? }. Sends the "you're on Pro" confirmation email.
+ */
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null)
   const email = body?.email

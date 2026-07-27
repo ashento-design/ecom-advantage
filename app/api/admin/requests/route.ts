@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getAdminUser, getSupabaseAdmin } from '@/app/lib/adminAuth'
 
+/**
+ * GET /api/admin/requests
+ * Admin auth required. Lists all user-submitted product requests, with
+ * submitter email merged in from profiles.
+ */
 export async function GET() {
   const admin = await getAdminUser()
   if (!admin) {

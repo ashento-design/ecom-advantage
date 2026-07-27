@@ -5,6 +5,12 @@ import { sendUpgradeConfirmationEmail } from '@/app/lib/email'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
+/**
+ * POST /api/stripe/webhook
+ * Called by Stripe only — verified via the `stripe-signature` header
+ * against STRIPE_WEBHOOK_SECRET, not a user-auth route. Handles
+ * subscription checkout/cancellation events and syncs profiles.plan.
+ */
 export async function POST(request: NextRequest) {
   const body = await request.text()
   const signature = request.headers.get('stripe-signature')!

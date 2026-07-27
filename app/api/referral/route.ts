@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server'
 import { createServerClient } from '@/app/lib/supabase'
 import { getServiceRoleClient } from '@/app/lib/supabaseAdmin'
 
+/**
+ * GET /api/referral
+ * Auth required. Returns the current user's own account-referral code and
+ * how many other users signed up using it.
+ */
 export async function GET() {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
