@@ -74,43 +74,35 @@ export default async function LandingPage() {
   return (
     <div className="min-h-screen bg-gray-950">
       <ReferralCapture />
-      <div className="fixed top-0 inset-x-0 z-50">
-        <Link
-          href="/waitlist"
-          className="block bg-indigo-600 hover:bg-indigo-500 transition-colors text-white text-xs sm:text-sm font-medium text-center py-2.5 px-4"
-        >
-          🚀 Launching Fall 2026 — Join the early access waitlist →
-        </Link>
-        <nav className="border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm">
-          <div className="max-w-6xl mx-auto px-6">
-            <div className="flex items-center justify-between h-16">
-              <Link href="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                  <Rocket size={18} className="text-white" />
-                </div>
-                <span className="font-bold text-white text-lg">Launchory</span>
-              </Link>
-              <div className="flex items-center gap-3">
-                <Link
-                  href="/auth/login"
-                  className="px-3 py-2 text-gray-400 hover:text-white text-sm font-medium transition-colors"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/auth/signup"
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-colors"
-                >
-                  Start for Free
-                </Link>
+      <nav className="fixed top-0 inset-x-0 z-50 border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex items-center justify-between h-16">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                <Rocket size={18} className="text-white" />
               </div>
+              <span className="font-bold text-white text-lg">Launchory</span>
+            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/auth/login"
+                className="px-3 py-2 text-gray-400 hover:text-white text-sm font-medium transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/auth/signup"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-colors"
+              >
+                Start for Free
+              </Link>
             </div>
           </div>
-        </nav>
-      </div>
+        </div>
+      </nav>
 
       {/* Hero */}
-      <section className="relative overflow-hidden pt-52 pb-24">
+      <section className="relative overflow-hidden pt-40 pb-24">
         <div
           aria-hidden
           className="absolute inset-0 opacity-40 [mask-image:radial-gradient(ellipse_at_top,black_20%,transparent_70%)] bg-[radial-gradient(circle,rgba(255,255,255,0.12)_1px,transparent_1px)] bg-[size:32px_32px]"
@@ -138,12 +130,6 @@ export default async function LandingPage() {
             >
               Start for Free
               <ArrowRight size={16} />
-            </Link>
-            <Link
-              href="/waitlist"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-transparent hover:bg-indigo-950/40 text-indigo-400 font-semibold px-6 py-3.5 rounded-xl transition-colors border border-indigo-500/40 hover:border-indigo-500"
-            >
-              Join Early Access Waitlist
             </Link>
             <a
               href="#features"

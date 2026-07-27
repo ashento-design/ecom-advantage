@@ -146,7 +146,7 @@ export function PricingSection() {
               href="/auth/signup"
               className="block text-center w-full bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 rounded-xl transition-colors border border-gray-700"
             >
-              Start Free — No Credit Card
+              Get Started Free
             </Link>
           </div>
         </div>
@@ -163,10 +163,7 @@ export function PricingSection() {
             <span className="text-4xl font-bold text-white">${proPrice}</span>
             <span className="text-gray-500 text-sm">/mo</span>
           </div>
-          <p className="text-gray-500 text-xs mb-1">{annual ? 'billed annually ($228/year)' : 'billed monthly'}</p>
-          <p className="text-orange-400 text-xs font-medium mb-6">
-            Beta pricing ends October 2026 — locks in at $29/mo forever
-          </p>
+          <p className="text-gray-500 text-xs mb-6">{annual ? 'billed annually ($228/year)' : 'billed monthly'}</p>
           <div className="space-y-3 mb-6">
             {proFeatures.map((f) => (
               <FeatureItem key={f.label} label={f.label} tip={f.tip} tone="indigo" />
@@ -181,7 +178,7 @@ export function PricingSection() {
               href="/auth/signup"
               className="block text-center w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-colors"
             >
-              Upgrade to Pro
+              Start Pro — ${proPrice}/mo
             </Link>
           </div>
         </div>
