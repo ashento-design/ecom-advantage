@@ -1,8 +1,8 @@
 import { Resend } from 'resend'
 
-const FROM_ADDRESS = 'Launchory <hello@launchory.io>'
+export const FROM_ADDRESS = 'Launchory <hello@launchory.io>'
 
-function getResendClient() {
+export function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) {
     throw new Error('RESEND_API_KEY is not configured on the server')
@@ -10,7 +10,7 @@ function getResendClient() {
   return new Resend(apiKey)
 }
 
-function emailShell(bodyHtml: string) {
+export function emailShell(bodyHtml: string) {
   return `
 <!DOCTYPE html>
 <html>
@@ -51,7 +51,7 @@ function emailShell(bodyHtml: string) {
 </html>`
 }
 
-function escapeHtml(value: string) {
+export function escapeHtml(value: string) {
   return value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -60,7 +60,7 @@ function escapeHtml(value: string) {
     .replace(/'/g, '&#39;')
 }
 
-function button(label: string, url: string) {
+export function button(label: string, url: string) {
   return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;">
     <tr>
       <td style="background-color:#4f46e5; border-radius:10px;">
@@ -78,10 +78,42 @@ export async function sendWelcomeEmail(to: string, name: string, dashboardUrl: s
   const html = emailShell(`
     <h1 style="color:#ffffff; font-size:20px; margin:0 0 12px 0;">Welcome to Launchory, ${firstName}!</h1>
     <p style="margin:0 0 16px 0;">
-      You're in. Launchory finds winning Shopify products, analyzes them with AI, and helps you build ad creative &mdash; all in one place.
+      You're in. Launchory finds winning Shopify products, analyzes them with AI, and helps you build ad creative &mdash; all in one place. Here&rsquo;s how to find your first winner:
     </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px 0;">
+      <tr>
+        <td style="padding:0 0 12px 0;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td style="width:26px; vertical-align:top; color:#818cf8; font-weight:700; font-size:14px;">1.</td>
+              <td style="color:#d1d5db; font-size:14px;">Browse today&rsquo;s curated feed of trending Shopify products.</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:0 0 12px 0;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td style="width:26px; vertical-align:top; color:#818cf8; font-weight:700; font-size:14px;">2.</td>
+              <td style="color:#d1d5db; font-size:14px;">Click <strong style="color:#ffffff;">AI Analyze</strong> on anything that catches your eye.</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+              <td style="width:26px; vertical-align:top; color:#818cf8; font-weight:700; font-size:14px;">3.</td>
+              <td style="color:#d1d5db; font-size:14px;">Get a demand score, competition read, and ad angles &mdash; instantly.</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
     <p style="margin:0 0 16px 0;">
-      You have <strong style="color:#ffffff;">3 free AI analyses</strong> to get started. Use them on the products that catch your eye in today's feed.
+      You have <strong style="color:#ffffff;">3 free AI analyses</strong> to get started &mdash; use them on the products that catch your eye first.
     </p>
     ${button('Go to Dashboard', dashboardUrl)}
     <p style="margin:16px 0 0 0; color:#6b7280; font-size:13px;">
@@ -92,7 +124,7 @@ export async function sendWelcomeEmail(to: string, name: string, dashboardUrl: s
   return resend.emails.send({
     from: FROM_ADDRESS,
     to,
-    subject: 'Welcome to Launchory 🚀',
+    subject: "Welcome to Launchory — here's how to find your first winner",
     html,
   })
 }
