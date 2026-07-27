@@ -13,8 +13,8 @@ export const metadata: Metadata = {
   },
   description: "AI-powered product research platform for Shopify dropshippers. Discover trends, analyze competition, and generate ad angles in seconds.",
   openGraph: {
-    title: "Launchory — Find Winning Products Faster",
-    description: "AI-powered product research platform for Shopify dropshippers. Discover trends, analyze competition, and generate ad angles in seconds.",
+    title: "Launchory — Find Winning Dropshipping Products with AI",
+    description: "AI-powered product research for Shopify dropshippers. Find winners, analyze competition, generate ads. Join the waitlist for founding member pricing.",
     url: "https://launchory.io",
     siteName: "Launchory",
     locale: "en_US",
@@ -22,8 +22,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Launchory — Find Winning Products Faster",
-    description: "AI-powered product research platform for Shopify dropshippers.",
+    title: "Launchory — Find Winning Dropshipping Products with AI",
+    description: "AI-powered product research for Shopify dropshippers. Find winners, analyze competition, generate ads. Join the waitlist for founding member pricing.",
   },
 };
 
