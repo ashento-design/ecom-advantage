@@ -79,7 +79,7 @@ export default async function LandingPage() {
           href="/waitlist"
           className="block bg-indigo-600 hover:bg-indigo-500 transition-colors text-white text-xs sm:text-sm font-medium text-center py-2.5 px-4"
         >
-          🚀 Launching Fall 2026 — Join the waitlist for $19/mo founding price →
+          🚀 Launching Fall 2026 — Join the early access waitlist →
         </Link>
         <nav className="border-b border-gray-800 bg-gray-950/80 backdrop-blur-sm">
           <div className="max-w-6xl mx-auto px-6">
@@ -143,7 +143,7 @@ export default async function LandingPage() {
               href="/waitlist"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-transparent hover:bg-indigo-950/40 text-indigo-400 font-semibold px-6 py-3.5 rounded-xl transition-colors border border-indigo-500/40 hover:border-indigo-500"
             >
-              Join Waitlist — $19/mo at launch
+              Join Early Access Waitlist
             </Link>
             <a
               href="#features"
