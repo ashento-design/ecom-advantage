@@ -414,7 +414,11 @@ function DashboardContent() {
             <p className="text-gray-400">Curated daily. AI-analyzed. Ready to test.</p>
             <span className="inline-flex items-center gap-1.5 text-gray-500 text-xs">
               <Clock size={12} />
-              Last updated: Today
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-500" />
+              </span>
+              Updated today
             </span>
           </div>
         </div>
