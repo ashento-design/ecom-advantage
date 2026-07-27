@@ -10,6 +10,7 @@ import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 type EmailPreferences = {
   weekly_digest: boolean
+  daily_digest: boolean
   breakout_alerts: boolean
 }
 
@@ -21,7 +22,7 @@ type Profile = {
   email_preferences: EmailPreferences | null
 }
 
-const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = { weekly_digest: true, breakout_alerts: false }
+const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = { weekly_digest: true, daily_digest: false, breakout_alerts: false }
 
 const FREE_ANALYSIS_LIMIT = 3
 
@@ -220,6 +221,28 @@ export default function AccountPage() {
                       className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${emailPreferences.weekly_digest ? 'translate-x-5' : ''}`}
                     />
                   </button>
+                </div>
+
+                <div className="bg-gray-800/60 border border-gray-700 rounded-xl px-4 py-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-white text-sm font-medium">Daily Winners (opt-in)</p>
+                      <p className="text-gray-500 text-xs">Get today&apos;s top 3 winning products every morning</p>
+                    </div>
+                    <button
+                      onClick={() => handleTogglePreference('daily_digest')}
+                      className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${emailPreferences.daily_digest ? 'bg-indigo-600' : 'bg-gray-700'}`}
+                    >
+                      <span
+                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${emailPreferences.daily_digest ? 'translate-x-5' : ''}`}
+                      />
+                    </button>
+                  </div>
+                  {emailPreferences.daily_digest && (
+                    <p className="text-gray-500 text-xs mt-2.5 pt-2.5 border-t border-gray-700/60">
+                      Pro tip: Our most engaged users check their daily digest every morning to stay ahead of trends
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between gap-4 bg-gray-800/60 border border-gray-700 rounded-xl px-4 py-3">

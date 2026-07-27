@@ -193,6 +193,40 @@ export async function sendWeeklyDigestEmail(to: string, name: string, products: 
   })
 }
 
+export async function sendDailyDigestEmail(to: string, name: string, products: DigestProduct[], dashboardUrl: string) {
+  const resend = getResendClient()
+  const firstName = name?.split(' ')[0] || 'there'
+  const dateStr = new Date().toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })
+
+  const rows = products.map((p) => `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px; background-color:#1f2937; border-radius:12px; overflow:hidden;">
+      <tr>
+        <td style="width:76px; padding:10px;">
+          <img src="${p.image_url}" width="60" height="60" alt="${escapeHtml(p.title)}" style="border-radius:8px; object-fit:cover; display:block;" />
+        </td>
+        <td style="padding:10px 14px 10px 0; vertical-align:middle;">
+          <p style="margin:0 0 2px 0; color:#ffffff; font-size:13px; font-weight:600;">${escapeHtml(p.title)}</p>
+          <p style="margin:0; color:#818cf8; font-size:12px; font-weight:600;">Demand score: ${p.demand_score}</p>
+        </td>
+      </tr>
+    </table>
+  `).join('')
+
+  const html = emailShell(`
+    <h1 style="color:#ffffff; font-size:19px; margin:0 0 4px 0;">☀️ Today's top 3 winning products</h1>
+    <p style="margin:0 0 18px 0; color:#9ca3af; font-size:13px;">Hey ${firstName}, here&rsquo;s what&rsquo;s trending on Launchory today.</p>
+    ${rows}
+    ${button('See Full Feed', dashboardUrl)}
+  `)
+
+  return resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: `☀️ Today's top 3 winning products — ${dateStr}`,
+    html,
+  })
+}
+
 type BreakoutProduct = { id: string; title: string; image_url: string; views: number }
 
 export async function sendBreakoutAlertEmail(to: string, name: string, product: BreakoutProduct, dashboardUrl: string) {

@@ -1,7 +1,9 @@
 import { getServiceRoleClient } from '@/app/lib/supabaseAdmin'
-import { sendWeeklyDigestEmail, sendBreakoutAlertEmail } from '@/app/lib/email'
+import { sendWeeklyDigestEmail, sendDailyDigestEmail, sendBreakoutAlertEmail } from '@/app/lib/email'
+import { computeLaunchoryScore } from '@/app/lib/launchoryScore'
 
 const TOP_PRODUCTS_COUNT = 5
+const DAILY_TOP_PRODUCTS_COUNT = 3
 const BREAKOUT_VIEWS_THRESHOLD = 50
 
 export async function sendWeeklyDigest(dashboardUrl: string) {
@@ -39,6 +41,53 @@ export async function sendWeeklyDigest(dashboardUrl: string) {
       sent += 1
     } catch (err) {
       console.error(`[weekly-digest] Failed to send to ${profile.email}:`, err)
+      failed += 1
+    }
+  }
+
+  return { sent, skipped, failed }
+}
+
+export async function sendDailyDigest(dashboardUrl: string) {
+  const supabaseAdmin = getServiceRoleClient()
+
+  // Ranked by Launchory Score (demand + real engagement), not raw demand
+  // score alone — same ranking users see on their own dashboard.
+  const { data: allProducts, error: productsError } = await supabaseAdmin
+    .from('products')
+    .select('id, title, image_url, demand_score, views, saves_count, trend_label')
+
+  if (productsError) throw productsError
+  if (!allProducts || allProducts.length === 0) {
+    return { sent: 0, skipped: 0, failed: 0 }
+  }
+
+  const products = [...allProducts]
+    .sort((a, b) => computeLaunchoryScore(b).score - computeLaunchoryScore(a).score)
+    .slice(0, DAILY_TOP_PRODUCTS_COUNT)
+    .map((p) => ({ id: p.id, title: p.title, image_url: p.image_url, demand_score: p.demand_score }))
+
+  const { data: profiles, error: profilesError } = await supabaseAdmin
+    .from('profiles')
+    .select('email, full_name, email_preferences')
+
+  if (profilesError) throw profilesError
+
+  let sent = 0
+  let skipped = 0
+  let failed = 0
+
+  for (const profile of profiles ?? []) {
+    const wantsDigest = profile.email_preferences?.daily_digest ?? false
+    if (!wantsDigest || !profile.email) {
+      skipped += 1
+      continue
+    }
+    try {
+      await sendDailyDigestEmail(profile.email, profile.full_name ?? '', products, dashboardUrl)
+      sent += 1
+    } catch (err) {
+      console.error(`[daily-digest] Failed to send to ${profile.email}:`, err)
       failed += 1
     }
   }
