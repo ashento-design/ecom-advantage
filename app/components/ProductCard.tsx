@@ -5,6 +5,7 @@ import { ScoreRing } from '@/app/components/ScoreRing'
 import { isTrending } from '@/app/lib/trending'
 import { computeLaunchoryScore } from '@/app/lib/launchoryScore'
 import { recordRecentlyViewed } from '@/app/lib/recentlyViewed'
+import { getSaturationInfo } from '@/app/lib/saturation'
 import type { Product } from '@/app/types'
 
 const trendConfig: Record<string, { color: string; icon: React.ReactNode }> = {
@@ -58,6 +59,7 @@ export function ProductCard({
   const views = product.views ?? 0
   const trending = isTrending(product.demand_score, views)
   const launchoryScore = computeLaunchoryScore(product)
+  const saturation = getSaturationInfo(product)
 
   function handleViewProduct() {
     recordRecentlyViewed({ id: product.id, title: product.title, image_url: product.image_url, niche: product.niche })
@@ -135,7 +137,15 @@ export function ProductCard({
               <h3 className="text-white font-semibold text-base mt-0.5 leading-snug hover:text-indigo-400 transition-colors">{product.title}</h3>
             </Link>
           </div>
-          <ScoreRing score={launchoryScore.score} label="Launchory" />
+          <div className="flex flex-col items-center gap-1.5 shrink-0">
+            <ScoreRing score={launchoryScore.score} label="Launchory" />
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border whitespace-nowrap ${saturation.pillClass}`}
+              title={saturation.rangeText}
+            >
+              🏪 {saturation.badgeLabel}
+            </span>
+          </div>
         </div>
         <span className="inline-flex items-center text-xs font-medium text-gray-400 mb-3">
           {launchoryScore.label}

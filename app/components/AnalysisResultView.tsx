@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { DollarSign, Target, Megaphone, Users, Share2, Calendar, Sparkles, Copy, Check } from 'lucide-react'
 import { ScoreRing } from '@/app/components/ScoreRing'
-import type { AnalysisResult } from '@/app/types'
+import { getSaturationInfo } from '@/app/lib/saturation'
+import type { AnalysisResult, Product } from '@/app/types'
 
 const competitionConfig: Record<string, string> = {
   Low: 'bg-green-500/20 text-green-400 border-green-500/30',
@@ -41,11 +42,13 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   )
 }
 
-export function AnalysisResultView({ result }: { result: AnalysisResult }) {
+export function AnalysisResultView({ result, product }: { result: AnalysisResult; product?: Product }) {
+  const saturation = product ? getSaturationInfo(product) : null
+
   return (
     <>
-      {/* Score + Competition + Price row */}
-      <div className="flex items-center gap-6 p-5 bg-gray-800/60 border border-gray-700 rounded-xl">
+      {/* Score + Competition + Saturation + Price row */}
+      <div className="flex items-center gap-6 p-5 bg-gray-800/60 border border-gray-700 rounded-xl flex-wrap">
         <ScoreRing score={result.demand_score} size="lg" animate />
         <div className="flex flex-col gap-3">
           <div>
@@ -64,6 +67,17 @@ export function AnalysisResultView({ result }: { result: AnalysisResult }) {
             </div>
           </div>
         </div>
+        {saturation && (
+          <div>
+            <span className="text-gray-500 text-xs uppercase tracking-wider font-medium">Market Saturation</span>
+            <div className="mt-1">
+              <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border ${saturation.pillClass}`}>
+                🏪 {saturation.tier}
+              </span>
+            </div>
+            <p className="text-gray-500 text-xs mt-1">{saturation.rangeText}</p>
+          </div>
+        )}
       </div>
 
       {/* Summary */}

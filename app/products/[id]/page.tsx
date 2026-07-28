@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useParams } from 'next/navigation'
 import {
   ArrowLeft, ExternalLink, Zap, Bookmark, Flame, TrendingUp, ArrowUp, AlertCircle,
-  Lock, Share2, Check, Calculator, ThumbsUp, Lightbulb,
+  Lock, Share2, Check, Calculator, ThumbsUp, Lightbulb, Store,
 } from 'lucide-react'
 import { SupplierQuickLinks } from '@/app/components/SupplierQuickLinks'
 import { AdSearchButtons } from '@/app/components/AdSearchButtons'
@@ -15,6 +15,7 @@ import { useSavedProducts } from '@/app/lib/useSavedProducts'
 import { useProductAnalysis } from '@/app/lib/useProductAnalysis'
 import { useToast } from '@/app/lib/useToast'
 import { computeLaunchoryScore } from '@/app/lib/launchoryScore'
+import { getSaturationInfo } from '@/app/lib/saturation'
 import { getAdActivityLevel } from '@/app/lib/adSearchLinks'
 import { AppLayout } from '@/app/components/AppLayout'
 import { ProductCard } from '@/app/components/ProductCard'
@@ -184,6 +185,7 @@ export default function ProductDetailPage() {
   const saved = savedIds.has(product.id)
   const launchoryScore = computeLaunchoryScore(product)
   const adActivityLevel = getAdActivityLevel(product.trend_label)
+  const saturation = getSaturationInfo(product)
 
   return (
     <AppLayout user={user}>
@@ -351,7 +353,7 @@ export default function ProductDetailPage() {
             </div>
           ) : displayedAnalysis ? (
             <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-6">
-              <AnalysisResultView result={displayedAnalysis} />
+              <AnalysisResultView result={displayedAnalysis} product={product} />
               <button
                 onClick={() => analyzeProduct(product)}
                 className="text-indigo-400 hover:text-indigo-300 text-sm font-medium transition-colors"
@@ -377,6 +379,29 @@ export default function ProductDetailPage() {
               </button>
             </div>
           )}
+        </div>
+
+        {/* Market Saturation */}
+        <div className="mb-12">
+          <div className="flex items-center gap-2 mb-5">
+            <Store size={18} className="text-indigo-400" />
+            <h2 className="text-xl font-bold text-white">Market Saturation</h2>
+          </div>
+          <div className={`rounded-2xl border p-6 ${saturation.cardAccentClass}`}>
+            <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
+              <div>
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold border ${saturation.pillClass}`}>
+                  🏪 {saturation.tier}
+                </span>
+                <p className="text-white font-semibold text-base mt-3">{saturation.rangeText}</p>
+              </div>
+            </div>
+            <p className="text-gray-400 text-sm leading-relaxed mb-4">{saturation.meaning}</p>
+            <div className="flex items-start gap-3 p-4 bg-gray-900/60 border border-gray-800 rounded-xl">
+              <Lightbulb size={16} className={`${saturation.iconClass} mt-0.5 shrink-0`} />
+              <p className="text-gray-300 text-sm leading-relaxed">{saturation.recommendation}</p>
+            </div>
+          </div>
         </div>
 
         {/* Live Ads */}

@@ -19,6 +19,7 @@ import { WELCOME_TOAST_KEY, WELCOME_TOAST_MESSAGE } from '@/app/lib/welcomeToast
 import { captureReferralCode } from '@/app/lib/referral'
 import { getCachedProducts, setCachedProducts } from '@/app/lib/productCache'
 import { computeLaunchoryScore } from '@/app/lib/launchoryScore'
+import { getSaturationInfo, SATURATION_TIER_RANK } from '@/app/lib/saturation'
 import { getRecentlyViewed, type RecentlyViewedProduct } from '@/app/lib/recentlyViewed'
 import { RecentlyViewedRow } from '@/app/components/RecentlyViewedRow'
 import { ProTipCard } from '@/app/components/ProTipCard'
@@ -32,7 +33,7 @@ function getGreeting() {
   return 'Good evening'
 }
 
-type SortOption = 'demand' | 'newest' | 'trending' | 'views' | 'launchory'
+type SortOption = 'demand' | 'newest' | 'trending' | 'views' | 'launchory' | 'saturation'
 type TabOption = 'all' | 'hot' | 'new' | 'staff'
 
 const trendRank: Record<string, number> = { Hot: 0, Trending: 1, Rising: 2 }
@@ -58,6 +59,11 @@ function sortProducts(products: Product[], sortBy: SortOption) {
     sorted.sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
   } else if (sortBy === 'launchory') {
     sorted.sort((a, b) => computeLaunchoryScore(b).score - computeLaunchoryScore(a).score)
+  } else if (sortBy === 'saturation') {
+    sorted.sort((a, b) => {
+      const rankDiff = SATURATION_TIER_RANK[getSaturationInfo(a).tier] - SATURATION_TIER_RANK[getSaturationInfo(b).tier]
+      return rankDiff !== 0 ? rankDiff : a.demand_score - b.demand_score
+    })
   } else {
     sorted.sort((a, b) => b.demand_score - a.demand_score)
   }
@@ -205,8 +211,10 @@ function DashboardContent() {
 
   useEffect(() => {
     let cancelled = false
-    setPageLoading(true)
-    setPageError(false)
+    Promise.resolve().then(() => {
+      setPageLoading(true)
+      setPageError(false)
+    })
     fetchProductPage(activeTab, filter, sortBy, currentPage).then(({ data, error, count }) => {
       if (cancelled) return
       if (error || !data) {
@@ -504,6 +512,7 @@ function DashboardContent() {
             <option value="newest">Sort: Newest First</option>
             <option value="trending">Sort: Trending First</option>
             <option value="views">Sort: Most Viewed</option>
+            <option value="saturation">Sort: Lowest Saturation</option>
           </select>
         </div>
 

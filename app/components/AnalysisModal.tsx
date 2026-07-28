@@ -98,7 +98,7 @@ export function AnalysisModal({
 
           {result && !loading && (
             <>
-              <AnalysisResultView result={result} />
+              <AnalysisResultView result={result} product={product} />
               <div>
                 <p className="text-gray-500 text-xs uppercase tracking-wider font-medium mb-3">Find suppliers &amp; live ads</p>
                 <SupplierQuickLinks title={product.title} className="flex flex-wrap gap-2 mb-3" />
