@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Package, Users, Zap, Plus, List, DollarSign, Crown, Image as ImageIcon } from 'lucide-react'
+import { Package, Users, Zap, Plus, List, DollarSign, Crown, Image as ImageIcon, Mail, Sunrise, CalendarDays, UserPlus, Send } from 'lucide-react'
 import { useAdminGuard } from '@/app/lib/useAdminGuard'
 import { AdminLayout } from '@/app/components/admin/AdminLayout'
 
@@ -15,11 +15,36 @@ type Stats = {
   totalAdsGenerated: number
 }
 
+const CRON_JOBS = [
+  { key: 'daily-digest', label: 'Daily Digest', description: "Top 3 products to today's opted-in users", icon: Sunrise, endpoint: '/api/email/daily-digest' },
+  { key: 'weekly-digest', label: 'Weekly Digest', description: 'Top 5 products to all opted-in users', icon: CalendarDays, endpoint: '/api/email/weekly-digest' },
+  { key: 'onboarding-emails', label: 'Onboarding Emails', description: 'Day 2/4/6/8 emails for users due today', icon: UserPlus, endpoint: '/api/email/onboarding-emails' },
+] as const
+
 export default function AdminDashboardPage() {
   const { user, adminChecked } = useAdminGuard()
   const [stats, setStats] = useState<Stats | null>(null)
   const [statsError, setStatsError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [triggering, setTriggering] = useState<string | null>(null)
+  const [cronResults, setCronResults] = useState<Record<string, string>>({})
+
+  async function handleTriggerCron(key: string, endpoint: string) {
+    setTriggering(key)
+    setCronResults((prev) => ({ ...prev, [key]: '' }))
+    try {
+      const res = await fetch(endpoint, { method: 'POST' })
+      const data = await res.json().catch(() => null)
+      setCronResults((prev) => ({
+        ...prev,
+        [key]: res.ok ? `Sent ${JSON.stringify(data)}` : `Error: ${data?.error ?? res.statusText}`,
+      }))
+    } catch {
+      setCronResults((prev) => ({ ...prev, [key]: 'Network error' }))
+    } finally {
+      setTriggering(null)
+    }
+  }
 
   useEffect(() => {
     if (!adminChecked) return
@@ -124,6 +149,42 @@ export default function AdminDashboardPage() {
             <p className="text-gray-500 text-xs mt-0.5">Edit or remove existing products</p>
           </div>
         </Link>
+      </div>
+
+      <div className="mt-8 bg-gray-900 border border-gray-800 rounded-xl p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <Mail size={16} className="text-emerald-400" />
+          <h2 className="text-white font-semibold text-sm">Trigger Cron Manually</h2>
+        </div>
+        <p className="text-gray-500 text-xs mb-5">
+          Fires the same send these emails run on their own schedule (now consolidated into one daily cron) — useful for testing without waiting.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {CRON_JOBS.map((job) => (
+            <div key={job.key} className="bg-gray-800/60 border border-gray-700 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <job.icon size={14} className="text-gray-400" />
+                <span className="text-white text-sm font-medium">{job.label}</span>
+              </div>
+              <p className="text-gray-500 text-xs mb-3">{job.description}</p>
+              <button
+                onClick={() => handleTriggerCron(job.key, job.endpoint)}
+                disabled={triggering === job.key}
+                className="w-full inline-flex items-center justify-center gap-1.5 bg-gray-900 hover:bg-gray-950 disabled:opacity-50 border border-gray-700 text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
+              >
+                {triggering === job.key ? (
+                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <Send size={12} />
+                )}
+                {triggering === job.key ? 'Sending…' : 'Send now'}
+              </button>
+              {cronResults[job.key] && (
+                <p className="text-gray-500 text-[11px] mt-2 break-words">{cronResults[job.key]}</p>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </AdminLayout>
   )
