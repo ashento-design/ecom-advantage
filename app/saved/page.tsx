@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Bookmark, ArrowLeft } from 'lucide-react'
+import { Bookmark, ArrowLeft, FolderOpen } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { useSavedProducts } from '@/app/lib/useSavedProducts'
 import { useProductAnalysis } from '@/app/lib/useProductAnalysis'
@@ -12,6 +12,7 @@ import { AppLayout } from '@/app/components/AppLayout'
 import { ProductCard, ProductCardSkeleton } from '@/app/components/ProductCard'
 import { AnalysisModal } from '@/app/components/AnalysisModal'
 import { UpgradeModal } from '@/app/components/UpgradeModal'
+import { CreateCollectionModal } from '@/app/components/CreateCollectionModal'
 import { Toast } from '@/app/components/Toast'
 import type { Product } from '@/app/types'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
@@ -21,6 +22,7 @@ export default function SavedPage() {
   const [authChecked, setAuthChecked] = useState(false)
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [showCreateCollection, setShowCreateCollection] = useState(false)
   const router = useRouter()
 
   const { toastMessage, showToast } = useToast()
@@ -101,6 +103,19 @@ export default function SavedPage() {
 
       <Toast message={toastMessage} />
 
+      {showCreateCollection && user && (
+        <CreateCollectionModal
+          userId={user.id}
+          creatorName={(user.user_metadata?.full_name as string | undefined)?.split(' ')[0] ?? user.email?.split('@')[0] ?? ''}
+          availableProducts={visibleProducts}
+          onClose={() => setShowCreateCollection(false)}
+          onCreated={() => {
+            setShowCreateCollection(false)
+            showToast('Collection created')
+          }}
+        />
+      )}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
           href="/"
@@ -110,8 +125,21 @@ export default function SavedPage() {
           Back to dashboard
         </Link>
 
-        <h1 className="text-3xl font-bold text-white mb-2">Saved Products</h1>
-        <p className="text-gray-400 mb-8">Products you&apos;ve bookmarked for later.</p>
+        <div className="flex items-center justify-between gap-4 mb-8 flex-wrap">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">Saved Products</h1>
+            <p className="text-gray-400">Products you&apos;ve bookmarked for later.</p>
+          </div>
+          {visibleProducts.length > 0 && (
+            <button
+              onClick={() => setShowCreateCollection(true)}
+              className="inline-flex items-center gap-2 bg-gray-900 hover:bg-gray-800 border border-gray-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors shrink-0"
+            >
+              <FolderOpen size={15} />
+              Create Collection
+            </button>
+          )}
+        </div>
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

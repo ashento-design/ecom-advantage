@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   Rocket, LayoutDashboard, Bookmark, Image as ImageIcon, Search, PlusCircle,
   Clock, HelpCircle, User, Gift, ChevronsLeft, ChevronsRight, ShieldCheck, LogOut, Calculator,
-  FlaskConical,
+  FlaskConical, FolderOpen,
 } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { SearchModal } from '@/app/components/SearchModal'
@@ -20,6 +20,7 @@ type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; isNe
 const MAIN_NAV: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/saved', label: 'Saved Products', icon: Bookmark },
+  { href: '/collections', label: 'Collections', icon: FolderOpen },
   { href: '/ads', label: 'My Ads', icon: ImageIcon },
   { href: '/store-intelligence', label: 'Store Intelligence', icon: Search, isNew: true },
   { href: '/calculator', label: 'Calculator', icon: Calculator },
