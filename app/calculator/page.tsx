@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Calculator as CalculatorIcon, Save, Share2, Check, Info } from 'lucide-react'
+import { Calculator as CalculatorIcon, Save, Share2, Check, Info, Lock } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { AppLayout } from '@/app/components/AppLayout'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
@@ -48,19 +47,16 @@ export default function CalculatorPage() {
   const [activePreset, setActivePreset] = useState<Preset | null>(null)
   const [saved, setSaved] = useState(false)
   const [shared, setShared] = useState(false)
-  const router = useRouter()
 
+  // Public tool — no auth redirect. We still track auth state so signed-in
+  // users skip the "sign up to save" CTA.
   useEffect(() => {
     const supabase = createBrowserClient()
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) {
-        router.push('/auth/login')
-        return
-      }
-      setUser(data.user)
+      setUser(data.user ?? null)
       setAuthChecked(true)
     })
-  }, [router])
+  }, [])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -279,6 +275,16 @@ export default function CalculatorPage() {
                 {shared ? 'Link copied!' : 'Share Calculation'}
               </button>
             </div>
+
+            {authChecked && !user && (
+              <Link
+                href="/auth/signup"
+                className="flex items-center gap-2.5 bg-indigo-600/10 hover:bg-indigo-600/15 border border-indigo-500/30 rounded-lg px-4 py-3 transition-colors"
+              >
+                <Lock size={14} className="text-indigo-400 shrink-0" />
+                <span className="text-indigo-300 text-xs font-medium">Sign up to save your calculations across devices</span>
+              </Link>
+            )}
           </div>
 
           <div className="space-y-5">
@@ -343,8 +349,8 @@ export default function CalculatorPage() {
         </div>
 
         <div className="mt-6 text-center">
-          <Link href="/" className="text-gray-500 hover:text-white text-sm transition-colors">
-            ← Back to dashboard
+          <Link href={user ? '/' : '/landing'} className="text-gray-500 hover:text-white text-sm transition-colors">
+            ← {user ? 'Back to dashboard' : 'Back to home'}
           </Link>
         </div>
       </div>

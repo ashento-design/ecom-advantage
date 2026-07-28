@@ -226,8 +226,8 @@ export default function AccountPage() {
                 <div className="bg-gray-800/60 border border-gray-700 rounded-xl px-4 py-3">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-white text-sm font-medium">Daily Winners (opt-in)</p>
-                      <p className="text-gray-500 text-xs">Get today&apos;s top 3 winning products every morning</p>
+                      <p className="text-white text-sm font-medium">Daily Winners Digest</p>
+                      <p className="text-gray-500 text-xs">Receive today&apos;s top 3 winning products every morning at 8am</p>
                     </div>
                     <button
                       onClick={() => handleTogglePreference('daily_digest')}

@@ -15,15 +15,15 @@ import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 const SIDEBAR_COLLAPSED_KEY = 'launchory_sidebar_collapsed'
 
-type NavItem = { href: string; label: string; icon: typeof LayoutDashboard }
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; isNew?: boolean }
 
 const MAIN_NAV: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/saved', label: 'Saved Products', icon: Bookmark },
   { href: '/ads', label: 'My Ads', icon: ImageIcon },
-  { href: '/store-intelligence', label: 'Store Intelligence', icon: Search },
+  { href: '/store-intelligence', label: 'Store Intelligence', icon: Search, isNew: true },
   { href: '/calculator', label: 'Calculator', icon: Calculator },
-  { href: '/testing', label: 'Testing Board', icon: FlaskConical },
+  { href: '/testing', label: 'Testing Board', icon: FlaskConical, isNew: true },
   { href: '/request', label: 'Request a Product', icon: PlusCircle },
   { href: '/changelog', label: 'Changelog', icon: Clock },
   { href: '/help', label: 'Help', icon: HelpCircle },
@@ -34,11 +34,14 @@ const SECONDARY_NAV: NavItem[] = [
   { href: '/referral', label: 'Refer & Earn', icon: Gift },
 ]
 
+// Calculator is a public, free-to-use tool that drives a lot of quick
+// mobile lookups, so it earns a bottom-tab slot; Store Intelligence stays
+// reachable from the sidebar but drops out of the 5-item mobile bar.
 const MOBILE_TABS: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/saved', label: 'Saved', icon: Bookmark },
   { href: '/ads', label: 'My Ads', icon: ImageIcon },
-  { href: '/store-intelligence', label: 'Intel', icon: Search },
+  { href: '/calculator', label: 'Calculator', icon: Calculator },
   { href: '/account', label: 'Account', icon: User },
 ]
 
@@ -61,6 +64,11 @@ function SidebarLink({ item, active, collapsed, badge }: { item: NavItem; active
     >
       <Icon size={20} className="shrink-0" />
       {!collapsed && <span className="truncate flex-1">{item.label}</span>}
+      {!collapsed && item.isNew && (
+        <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-full px-1.5 py-0.5">
+          New
+        </span>
+      )}
       {!collapsed && !!badge && badge > 0 && (
         <span className="shrink-0 text-xs font-semibold bg-gray-800 text-gray-300 rounded-full px-1.5 py-0.5 min-w-[1.25rem] text-center">
           {badge}
@@ -69,6 +77,7 @@ function SidebarLink({ item, active, collapsed, badge }: { item: NavItem; active
       {collapsed && (
         <span className="pointer-events-none absolute left-full ml-2 whitespace-nowrap rounded-lg bg-gray-800 border border-gray-700 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity z-50">
           {item.label}
+          {item.isNew ? ' · New' : ''}
           {!!badge && badge > 0 ? ` (${badge})` : ''}
         </span>
       )}
