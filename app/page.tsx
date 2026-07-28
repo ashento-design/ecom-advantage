@@ -12,6 +12,8 @@ import { ProductCard, ProductCardSkeleton } from '@/app/components/ProductCard'
 import { Pagination } from '@/app/components/Pagination'
 import { AnalysisModal } from '@/app/components/AnalysisModal'
 import { UpgradeModal } from '@/app/components/UpgradeModal'
+import { TrackProductModal } from '@/app/components/TrackProductModal'
+import { addProductTest, type TestStatus } from '@/app/lib/productTests'
 import { Toast } from '@/app/components/Toast'
 import { OnboardingModal } from '@/app/components/OnboardingModal'
 import { BackToTopButton } from '@/app/components/BackToTopButton'
@@ -168,6 +170,22 @@ function DashboardContent() {
     showUpgradeModal, upgrading, upgradeError,
     analyzeProduct, closeModal, setShowUpgradeModal, handleUpgrade,
   } = useProductAnalysis()
+
+  const [trackingProduct, setTrackingProduct] = useState<Product | null>(null)
+  const [trackSaving, setTrackSaving] = useState(false)
+
+  async function handleSaveTrack(status: TestStatus, notes: string) {
+    if (!user || !trackingProduct) return
+    setTrackSaving(true)
+    const { error } = await addProductTest(user.id, trackingProduct.id, status, notes)
+    setTrackSaving(false)
+    if (error) {
+      console.error('Failed to add product test:', error.message)
+      return
+    }
+    setTrackingProduct(null)
+    showToast('Added to Testing Board')
+  }
 
   const allNiches = Array.from(new Set(products.map((p) => p.niche)))
   const orderedNiches = [
@@ -366,6 +384,15 @@ function DashboardContent() {
         />
       )}
 
+      {trackingProduct && (
+        <TrackProductModal
+          productTitle={trackingProduct.title}
+          onClose={() => setTrackingProduct(null)}
+          onSave={handleSaveTrack}
+          saving={trackSaving}
+        />
+      )}
+
       {showUpgradeModal && (
         <UpgradeModal
           onClose={() => setShowUpgradeModal(false)}
@@ -461,6 +488,7 @@ function DashboardContent() {
                   saved={savedIds.has(product.id)}
                   onToggleSave={toggleSave}
                   onAnalyze={analyzeProduct}
+                  onTrack={setTrackingProduct}
                 />
               ))}
             </div>
@@ -558,6 +586,7 @@ function DashboardContent() {
                     saved={savedIds.has(product.id)}
                     onToggleSave={toggleSave}
                     onAnalyze={analyzeProduct}
+                    onTrack={setTrackingProduct}
                   />
                 ))}
               </div>

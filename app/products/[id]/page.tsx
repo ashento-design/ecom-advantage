@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useParams } from 'next/navigation'
 import {
   ArrowLeft, ExternalLink, Zap, Bookmark, Flame, TrendingUp, ArrowUp, AlertCircle,
-  Lock, Share2, Check, Calculator, ThumbsUp, Lightbulb, Store,
+  Lock, Share2, Check, Calculator, ThumbsUp, Lightbulb, Store, FlaskConical,
 } from 'lucide-react'
 import { SupplierQuickLinks } from '@/app/components/SupplierQuickLinks'
 import { AdSearchButtons } from '@/app/components/AdSearchButtons'
@@ -17,12 +17,14 @@ import { useToast } from '@/app/lib/useToast'
 import { computeLaunchoryScore } from '@/app/lib/launchoryScore'
 import { getSaturationInfo } from '@/app/lib/saturation'
 import { getAdActivityLevel } from '@/app/lib/adSearchLinks'
+import { addProductTest, type TestStatus } from '@/app/lib/productTests'
 import { AppLayout } from '@/app/components/AppLayout'
 import { ProductCard } from '@/app/components/ProductCard'
 import { ScoreRing } from '@/app/components/ScoreRing'
 import { AnalysisModal } from '@/app/components/AnalysisModal'
 import { AnalysisResultView } from '@/app/components/AnalysisResultView'
 import { UpgradeModal } from '@/app/components/UpgradeModal'
+import { TrackProductModal } from '@/app/components/TrackProductModal'
 import { Toast } from '@/app/components/Toast'
 import type { Product, AnalysisResult } from '@/app/types'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
@@ -52,6 +54,8 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
+  const [trackingProduct, setTrackingProduct] = useState<Product | null>(null)
+  const [trackSaving, setTrackSaving] = useState(false)
 
   const { toastMessage, showToast } = useToast()
   const { savedIds, toggleSave } = useSavedProducts(user, showToast)
@@ -60,6 +64,19 @@ export default function ProductDetailPage() {
     showUpgradeModal, upgrading, upgradeError,
     analyzeProduct, closeModal, setShowUpgradeModal, handleUpgrade,
   } = useProductAnalysis()
+
+  async function handleSaveTrack(status: TestStatus, notes: string) {
+    if (!user || !trackingProduct) return
+    setTrackSaving(true)
+    const { error } = await addProductTest(user.id, trackingProduct.id, status, notes)
+    setTrackSaving(false)
+    if (error) {
+      console.error('Failed to add product test:', error.message)
+      return
+    }
+    setTrackingProduct(null)
+    showToast('Added to Testing Board')
+  }
 
   // Public page — no redirect for logged-out visitors. We still track
   // auth state so the AI analysis, save, and existing-analysis fetch can
@@ -209,6 +226,15 @@ export default function ProductDetailPage() {
         />
       )}
 
+      {trackingProduct && (
+        <TrackProductModal
+          productTitle={trackingProduct.title}
+          onClose={() => setTrackingProduct(null)}
+          onSave={handleSaveTrack}
+          saving={trackSaving}
+        />
+      )}
+
       <Toast message={toastMessage} />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -291,17 +317,26 @@ export default function ProductDetailPage() {
               </a>
 
               {user ? (
-                <button
-                  onClick={() => toggleSave(product.id)}
-                  className={`w-full inline-flex items-center justify-center gap-2 text-sm font-semibold py-3 rounded-xl transition-colors border ${
-                    saved
-                      ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/30 hover:bg-indigo-600/30'
-                      : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700'
-                  }`}
-                >
-                  <Bookmark size={15} className={saved ? 'fill-indigo-400' : ''} />
-                  {saved ? 'Saved' : 'Save Product'}
-                </button>
+                <>
+                  <button
+                    onClick={() => toggleSave(product.id)}
+                    className={`w-full inline-flex items-center justify-center gap-2 text-sm font-semibold py-3 rounded-xl transition-colors border ${
+                      saved
+                        ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/30 hover:bg-indigo-600/30'
+                        : 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700'
+                    }`}
+                  >
+                    <Bookmark size={15} className={saved ? 'fill-indigo-400' : ''} />
+                    {saved ? 'Saved' : 'Save Product'}
+                  </button>
+                  <button
+                    onClick={() => setTrackingProduct(product)}
+                    className="w-full inline-flex items-center justify-center gap-2 text-sm font-semibold py-3 rounded-xl transition-colors border bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700"
+                  >
+                    <FlaskConical size={15} />
+                    Track This Product
+                  </button>
+                </>
               ) : (
                 <div className="relative w-full group">
                   <Link
@@ -452,6 +487,7 @@ export default function ProductDetailPage() {
                   saved={savedIds.has(related.id)}
                   onToggleSave={toggleSave}
                   onAnalyze={analyzeProduct}
+                  onTrack={user ? setTrackingProduct : undefined}
                 />
               ))}
             </div>

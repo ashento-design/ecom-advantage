@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Flame, TrendingUp, ArrowUp, Bookmark, ExternalLink, Zap, Eye } from 'lucide-react'
+import { Flame, TrendingUp, ArrowUp, Bookmark, ExternalLink, Zap, Eye, FlaskConical } from 'lucide-react'
 import { ScoreRing } from '@/app/components/ScoreRing'
 import { isTrending } from '@/app/lib/trending'
 import { computeLaunchoryScore } from '@/app/lib/launchoryScore'
@@ -49,11 +49,13 @@ export function ProductCard({
   saved,
   onToggleSave,
   onAnalyze,
+  onTrack,
 }: {
   product: Product
   saved: boolean
   onToggleSave: (id: string) => void
   onAnalyze: (p: Product) => void
+  onTrack?: (p: Product) => void
 }) {
   const trend = trendConfig[product.trend_label] ?? trendConfig['Rising']
   const views = product.views ?? 0
@@ -167,6 +169,20 @@ export function ProductCard({
           >
             <ExternalLink size={14} className="text-gray-400" />
           </a>
+          {onTrack && (
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                onTrack(product)
+              }}
+              className="w-10 h-10 bg-gray-800 hover:bg-gray-700 rounded-xl flex items-center justify-center transition-colors border border-gray-700"
+              title="Track This Product"
+              aria-label="Track This Product"
+            >
+              <FlaskConical size={14} className="text-gray-400" />
+            </button>
+          )}
         </div>
       </div>
     </div>

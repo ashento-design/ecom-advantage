@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   Rocket, LayoutDashboard, Bookmark, Image as ImageIcon, Search, PlusCircle,
   Clock, HelpCircle, User, Gift, ChevronsLeft, ChevronsRight, ShieldCheck, LogOut, Calculator,
+  FlaskConical,
 } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { SearchModal } from '@/app/components/SearchModal'
@@ -22,6 +23,7 @@ const MAIN_NAV: NavItem[] = [
   { href: '/ads', label: 'My Ads', icon: ImageIcon },
   { href: '/store-intelligence', label: 'Store Intelligence', icon: Search },
   { href: '/calculator', label: 'Calculator', icon: Calculator },
+  { href: '/testing', label: 'Testing Board', icon: FlaskConical },
   { href: '/request', label: 'Request a Product', icon: PlusCircle },
   { href: '/changelog', label: 'Changelog', icon: Clock },
   { href: '/help', label: 'Help', icon: HelpCircle },
