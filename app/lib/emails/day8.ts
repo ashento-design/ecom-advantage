@@ -2,13 +2,10 @@ import { emailShell, button, getResendClient, FROM_ADDRESS } from '@/app/lib/ema
 
 // Onboarding drip, day 8 — upgrade push for free-plan users only.
 //
-// Note: this intentionally quotes $29/mo (billed monthly) with the $19/mo
-// annual-equivalent, matching the real numbers on the account/pricing page
-// and what Stripe checkout actually charges. The waitlist's "$19/mo
-// founding member" price is a separate pre-launch offer for people who
-// haven't signed up yet — quoting it here to an existing account holder
-// would promise a price this email's audience can't actually get at
-// checkout, so it's deliberately left out.
+// Quotes $29/mo (billed monthly) with the $19/mo annual-equivalent —
+// matches the real numbers on the account/pricing page and what Stripe
+// checkout actually charges, so keep these two numbers in sync with
+// PricingSection if either ever changes.
 export async function sendOnboardingDay8Email(to: string, name: string, analysesUsed: number, dashboardUrl: string) {
   const resend = getResendClient()
   const firstName = name?.split(' ')[0] || 'there'
