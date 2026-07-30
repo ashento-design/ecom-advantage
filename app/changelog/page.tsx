@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import {
   Sparkles, Puzzle, TrendingUp, Zap, Video,
-  ShoppingCart, Smartphone, Users, Lock,
+  ShoppingCart, Smartphone, Users, Lock, BarChart3,
 } from 'lucide-react'
 import { StoreIntelligenceChangelogEntry } from '@/app/components/StoreIntelligenceChangelogEntry'
 import { AppLayout } from '@/app/components/AppLayout'
@@ -18,53 +18,53 @@ const releases = [
     date: 'July 2026',
     current: true,
     items: [
-      'AI Ad Creative Generator — generate scroll-stopping ad images from any product',
-      'My Ads Gallery — view and download all your generated ad creatives',
-      'Supplier Quick Links — find products on AliExpress, CJDropshipping, and Zendrop instantly',
-      'Enriched AI Analysis — now includes target audience, best platforms, seasonality, and wow factor',
-      'Referral System — earn rewards by referring other dropshippers',
+      'AI Ad Creative Generator — Turn any product into scroll-stopping ad images in seconds, no design skills required',
+      'Ad Gallery — Every ad creative you generate, saved in one place and ready to download and launch',
+      'One-click supplier search — Jump straight to AliExpress, CJDropshipping, or Zendrop for any product, no manual searching',
+      'Smarter AI analysis — Every product now comes with target audience insights, best ad platforms, seasonality timing, and its key "wow factor"',
+      'Refer & earn — Invite fellow dropshippers to Launchory and earn rewards for every signup',
     ],
   },
   {
     version: '0.7',
     date: 'July 2026',
     items: [
-      'Product Detail Pages — deep dive into any product with full analysis',
-      'Search — find any product instantly across the entire database',
-      'Saved Products — bookmark products to your personal board',
-      'Dashboard Tabs — Hot This Week, New Arrivals, Staff Picks',
-      'Admin Panel — manage products and view platform analytics',
+      'Full product deep-dives — Every product now has its own page with complete analysis, supplier links, and more',
+      'Instant search — Find any winning product in the feed in seconds',
+      'Save your favorites — Bookmark winning products to revisit anytime',
+      'Curated feeds — Browse Hot This Week, New Arrivals, and Staff Picks to find winners faster',
     ],
   },
   {
     version: '0.6',
     date: 'June 2026',
     items: [
-      'Stripe Payments — Pro plan at $29/month',
-      'Paywall — 3 free AI analyses then upgrade to Pro',
-      'Account Page — manage your plan and usage',
-      'Mobile Responsive — full mobile support',
+      'Pro Plan launched — Unlock unlimited AI analyses, the full product feed, and priority features for $29/month',
+      'Free tier introduced — Try Launchory with 3 complimentary AI analyses, no credit card required',
+      'Account dashboard — See your plan and usage, and manage your subscription in one place',
+      'Launchory on the go — Full mobile support so you can research winning products from anywhere',
     ],
   },
   {
     version: '0.5',
     date: 'June 2026',
     items: [
-      'AI Product Analyzer — instant demand scores, competition analysis, ad angles, and hooks',
-      'User Authentication — sign up, log in, secure accounts',
-      'Product Feed — curated daily winning products across 12 niches',
+      'AI Product Analyzer launched — Get instant demand scores, competition analysis, ready-to-use ad angles, and scroll-stopping hooks for any product',
+      'Secure accounts — Sign up and save your research, analyses, and ad creatives across sessions',
+      'Daily winning products — A curated feed of trending products across 12 niches, updated every day',
     ],
   },
 ]
 
 const comingSoon = [
-  { icon: Puzzle, title: 'Chrome Extension', description: 'Analyze any product while browsing AliExpress.' },
-  { icon: TrendingUp, title: 'TikTok Trend Integration', description: 'Spot viral products before they peak.' },
-  { icon: Zap, title: 'Automated Product Discovery', description: 'AI finds new winners daily.' },
-  { icon: Video, title: 'Video Ad Generator', description: 'Create video ads, not just images.' },
-  { icon: ShoppingCart, title: 'One-Click Product Import', description: 'Import to your Shopify store instantly.' },
-  { icon: Smartphone, title: 'Mobile App', description: 'Launchory on iOS and Android.' },
-  { icon: Users, title: 'Affiliate Program', description: 'Earn 30% recurring commission.' },
+  { icon: Puzzle, title: 'Chrome Extension', description: 'Analyze any AliExpress product instantly while you browse, without leaving the page.' },
+  { icon: TrendingUp, title: 'TikTok Trend Integration', description: 'See which products are going viral on TikTok before they peak.' },
+  { icon: Video, title: 'Video Ad Generator', description: 'Create scroll-stopping video ads, not just images.' },
+  { icon: Zap, title: 'Automated Product Discovery', description: 'AI finds and adds new winning products to your feed daily.' },
+  { icon: BarChart3, title: 'Competitor Store Tracker', description: "Deep-dive analytics on any Shopify store's full product catalog." },
+  { icon: ShoppingCart, title: 'One-Click Shopify Import', description: 'Add winning products directly to your store from Launchory.' },
+  { icon: Smartphone, title: 'Mobile App', description: 'Full Launchory experience on iOS and Android.' },
+  { icon: Users, title: 'Team Accounts', description: 'Share your research and ad creatives with your team or VA.' },
 ]
 
 export default async function ChangelogPage() {
