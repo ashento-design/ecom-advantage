@@ -83,22 +83,22 @@ const ARTICLES: HelpArticle[] = [
   {
     category: 'Billing & Plans',
     question: 'How do I cancel my subscription?',
-    answer: 'Email hello@launchory.io and we’ll cancel it for you right away — self-serve cancellation from the account page is on the way. You’ll keep Pro access through the end of your current billing period either way.',
+    answer: 'You can cancel your subscription anytime from your Account page. Click "Manage Subscription" to access the Stripe billing portal where you can cancel, pause, or update your plan. Your Pro access continues until the end of your billing period.',
   },
   {
     category: 'Billing & Plans',
-    question: 'What is the founding member price?',
-    answer: 'Dropshippers who join the waitlist before our Fall 2026 launch lock in Pro at $19/mo forever, instead of the $29/mo standard price. The first 200 waitlist subscribers get priority on founding member spots.',
+    question: 'How do I get a discount on Pro?',
+    answer: 'Switch to annual billing on the pricing page (or from your Account page) to lock in Pro at $19/mo, billed as $228/year, instead of the standard $29/mo month-to-month price.',
   },
   {
     category: 'Billing & Plans',
     question: 'What is your refund policy?',
-    answer: 'Pro comes with a 7-day money-back guarantee. If it’s not for you within your first week, email hello@launchory.io and we’ll refund you, no questions asked.',
+    answer: "We offer a 7-day money-back guarantee. If you're not satisfied within your first 7 days on Pro, contact us at hello@launchory.io for a full refund.",
   },
   {
     category: 'Account',
     question: 'How do I update my account details?',
-    answer: 'Your name and email preferences (weekly digest, breakout alerts) can be managed from your Account page. For your email address or password, contact hello@launchory.io and we’ll help you update it.',
+    answer: 'You can update your display name right from your Account page — click the pencil icon next to your name and save your changes. Email preferences (weekly digest, daily digest, breakout alerts) are also managed there. For your email address or password, contact hello@launchory.io and we’ll help you update it.',
   },
   {
     category: 'Account',

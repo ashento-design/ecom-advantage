@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Zap, CheckCircle, Check, User, Mail, Lock } from 'lucide-react'
+import { ArrowLeft, Zap, CheckCircle, Check, User, Mail, Lock, Pencil, X } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { AppLayout } from '@/app/components/AppLayout'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
@@ -33,6 +33,9 @@ export default function AccountPage() {
   const [upgrading, setUpgrading] = useState(false)
   const [managingSubscription, setManagingSubscription] = useState(false)
   const [portalError, setPortalError] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState(false)
+  const [nameDraft, setNameDraft] = useState('')
+  const [savingName, setSavingName] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -75,6 +78,29 @@ export default function AccountPage() {
       console.error('Failed to update email preferences:', error.message)
       setProfile({ ...profile, email_preferences: current })
     }
+  }
+
+  function startEditingName() {
+    setNameDraft(profile?.full_name ?? '')
+    setEditingName(true)
+  }
+
+  async function handleSaveName() {
+    if (!user) return
+    const trimmed = nameDraft.trim()
+    setSavingName(true)
+    const supabase = createBrowserClient()
+    const [{ error: profileError }, { error: authError }] = await Promise.all([
+      supabase.from('profiles').update({ full_name: trimmed || null }).eq('id', user.id),
+      supabase.auth.updateUser({ data: { full_name: trimmed } }),
+    ])
+    setSavingName(false)
+    if (profileError || authError) {
+      console.error('Failed to update name:', profileError?.message ?? authError?.message)
+      return
+    }
+    setProfile((prev) => (prev ? { ...prev, full_name: trimmed || null } : prev))
+    setEditingName(false)
   }
 
   async function handleUpgrade() {
@@ -167,8 +193,46 @@ export default function AccountPage() {
                   <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center shrink-0">
                     <User size={20} className="text-white" />
                   </div>
-                  <div>
-                    <h2 className="text-white font-semibold text-base">{profile?.full_name ?? 'No name set'}</h2>
+                  <div className="min-w-0">
+                    {editingName ? (
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          value={nameDraft}
+                          onChange={(e) => setNameDraft(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                          autoFocus
+                          placeholder="Your name"
+                          className="min-w-0 bg-gray-800 border border-gray-700 rounded-lg px-2.5 py-1.5 text-white text-sm outline-none focus:border-indigo-500"
+                        />
+                        <button
+                          onClick={handleSaveName}
+                          disabled={savingName}
+                          className="shrink-0 text-emerald-400 hover:text-emerald-300 disabled:opacity-50"
+                          aria-label="Save name"
+                        >
+                          <Check size={16} />
+                        </button>
+                        <button
+                          onClick={() => setEditingName(false)}
+                          className="shrink-0 text-gray-500 hover:text-gray-300"
+                          aria-label="Cancel"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        <h2 className="text-white font-semibold text-base">{profile?.full_name ?? 'No name set'}</h2>
+                        <button
+                          onClick={startEditingName}
+                          className="shrink-0 text-gray-600 hover:text-gray-300 transition-colors"
+                          aria-label="Edit name"
+                          title="Edit name"
+                        >
+                          <Pencil size={13} />
+                        </button>
+                      </div>
+                    )}
                     <p className="text-gray-500 text-sm">{profile?.email ?? user?.email}</p>
                   </div>
                 </div>
