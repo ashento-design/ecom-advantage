@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Download, Mail, Users } from 'lucide-react'
+import { Download, Users } from 'lucide-react'
 import { useAdminGuard } from '@/app/lib/useAdminGuard'
 import { AdminLayout } from '@/app/components/admin/AdminLayout'
 
@@ -82,14 +82,6 @@ export default function AdminWaitlistPage() {
           >
             <Download size={15} />
             Export to CSV
-          </button>
-          <button
-            disabled
-            title="Coming soon"
-            className="inline-flex items-center gap-2 bg-emerald-600/50 cursor-not-allowed text-white/70 text-sm font-medium px-4 py-2.5 rounded-xl border border-emerald-500/30"
-          >
-            <Mail size={15} />
-            Send Launch Email
           </button>
         </div>
       </div>

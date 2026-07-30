@@ -15,15 +15,26 @@ import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 const SIDEBAR_COLLAPSED_KEY = 'launchory_sidebar_collapsed'
 
-type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; isNew?: boolean }
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; newSince?: string }
+
+// "New" badges auto-expire 30 days after the date a feature shipped,
+// rather than staying on forever — keeps the sidebar honest about what's
+// actually recent.
+const NEW_BADGE_DAYS = 30
+
+function isNewBadgeActive(newSince?: string) {
+  if (!newSince) return false
+  const elapsedMs = Date.now() - new Date(newSince).getTime()
+  return elapsedMs >= 0 && elapsedMs < NEW_BADGE_DAYS * 24 * 60 * 60 * 1000
+}
 
 const MAIN_NAV: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/saved', label: 'Saved Products', icon: Bookmark },
   { href: '/collections', label: 'Collections', icon: FolderOpen },
   { href: '/ads', label: 'My Ads', icon: ImageIcon },
-  { href: '/store-intelligence', label: 'Store Intelligence', icon: Search, isNew: true },
-  { href: '/testing', label: 'Testing Board', icon: FlaskConical, isNew: true },
+  { href: '/store-intelligence', label: 'Store Intelligence', icon: Search, newSince: '2026-07-23' },
+  { href: '/testing', label: 'Testing Board', icon: FlaskConical, newSince: '2026-07-23' },
   { href: '/request', label: 'Request a Product', icon: PlusCircle },
   { href: '/changelog', label: 'Changelog', icon: Clock },
   { href: '/help', label: 'Help', icon: HelpCircle },
@@ -51,6 +62,7 @@ function isNavActive(pathname: string, href: string) {
 
 function SidebarLink({ item, active, collapsed, badge }: { item: NavItem; active: boolean; collapsed: boolean; badge?: number }) {
   const Icon = item.icon
+  const showNew = isNewBadgeActive(item.newSince)
   return (
     <Link
       href={item.href}
@@ -64,7 +76,7 @@ function SidebarLink({ item, active, collapsed, badge }: { item: NavItem; active
     >
       <Icon size={20} className="shrink-0" />
       {!collapsed && <span className="truncate flex-1">{item.label}</span>}
-      {!collapsed && item.isNew && (
+      {!collapsed && showNew && (
         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-full px-1.5 py-0.5">
           New
         </span>
@@ -77,7 +89,7 @@ function SidebarLink({ item, active, collapsed, badge }: { item: NavItem; active
       {collapsed && (
         <span className="pointer-events-none absolute left-full ml-2 whitespace-nowrap rounded-lg bg-gray-800 border border-gray-700 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 group-hover:opacity-100 transition-opacity z-50">
           {item.label}
-          {item.isNew ? ' · New' : ''}
+          {showNew ? ' · New' : ''}
           {!!badge && badge > 0 ? ` (${badge})` : ''}
         </span>
       )}
