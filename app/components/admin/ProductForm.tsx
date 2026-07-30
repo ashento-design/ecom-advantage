@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createBrowserClient } from '@/app/lib/supabase'
-import { AlertCircle, Eye, ImageOff, Loader2, Upload } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Eye, ImageOff, Loader2, Sparkles, Upload } from 'lucide-react'
 
 type UnsplashSuggestion = { id: string; thumb: string; full: string; alt: string }
 
@@ -54,6 +54,11 @@ export function ProductForm({
   const [nicheSelectValue, setNicheSelectValue] = useState(initialValues?.niche ?? '')
   const [customNiche, setCustomNiche] = useState('')
   const [useCustomNiche, setUseCustomNiche] = useState(false)
+
+  const [importUrl, setImportUrl] = useState('')
+  const [importing, setImporting] = useState(false)
+  const [importError, setImportError] = useState<string | null>(null)
+  const [importSuccess, setImportSuccess] = useState(false)
 
   useEffect(() => {
     const supabase = createBrowserClient()
@@ -151,6 +156,50 @@ export function ProductForm({
     }
   }, [title])
 
+  async function handleImport() {
+    if (!importUrl.trim()) return
+    setImporting(true)
+    setImportError(null)
+    setImportSuccess(false)
+    try {
+      const res = await fetch('/api/admin/aliexpress-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: importUrl.trim() }),
+      })
+      const data = await res.json().catch(() => null)
+      if (!res.ok) {
+        setImportError(
+          data?.error === 'invalid_aliexpress_url'
+            ? 'That doesn’t look like an AliExpress product URL (expected an aliexpress.com/item/… link).'
+            : 'Could not import this product. Please try again or fill in the fields manually.'
+        )
+        return
+      }
+
+      setTitle(data.title ?? '')
+      setDescription(data.description ?? '')
+      if (data.image_url) {
+        setImageUrl(data.image_url)
+        setPreviewUrl(data.image_url)
+        setImageError(false)
+      }
+      setSupplierUrl(data.supplier_url ?? importUrl.trim())
+      setDemandScore(data.demand_score ?? 80)
+      setTrendLabel(data.trend_label ?? 'Rising')
+      if (data.niche) {
+        setNiches((prev) => (prev.includes(data.niche) ? prev : [...prev, data.niche].sort()))
+        setNicheSelectValue(data.niche)
+        setUseCustomNiche(false)
+      }
+      setImportSuccess(true)
+    } catch {
+      setImportError('Network error. Please try again.')
+    } finally {
+      setImporting(false)
+    }
+  }
+
   function handleNicheSelectChange(value: string) {
     if (value === CUSTOM_NICHE) {
       setUseCustomNiche(true)
@@ -178,6 +227,51 @@ export function ProductForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+      <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4">
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles size={15} className="text-emerald-400" />
+          <p className="text-white text-sm font-semibold">Import from AliExpress</p>
+        </div>
+        <p className="text-gray-500 text-xs mb-3">Paste a product link and we&rsquo;ll auto-fill the fields below using AI.</p>
+        <div className="flex gap-2">
+          <input
+            type="url"
+            value={importUrl}
+            onChange={(e) => setImportUrl(e.target.value)}
+            placeholder="Paste AliExpress product URL…"
+            className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors text-sm"
+          />
+          <button
+            type="button"
+            onClick={handleImport}
+            disabled={importing || !importUrl.trim()}
+            className="shrink-0 inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold px-4 py-3 rounded-xl transition-colors"
+          >
+            {importing ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Sparkles size={15} />
+            )}
+            Auto-fill
+          </button>
+        </div>
+        {importing && (
+          <p className="text-emerald-400 text-xs mt-3 flex items-center gap-1.5">
+            <Loader2 size={12} className="animate-spin" />
+            Analyzing product…
+          </p>
+        )}
+        {importError && (
+          <p className="text-red-400 text-xs mt-3">{importError}</p>
+        )}
+        {importSuccess && !importing && (
+          <p className="text-emerald-400 text-xs mt-3 flex items-center gap-1.5">
+            <CheckCircle2 size={12} />
+            Fields populated — review and adjust before saving.
+          </p>
+        )}
+      </div>
+
       {error && (
         <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
           <AlertCircle size={16} className="text-red-400 mt-0.5 shrink-0" />

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Zap } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { useAdminGuard } from '@/app/lib/useAdminGuard'
 import { AdminLayout } from '@/app/components/admin/AdminLayout'
@@ -64,13 +64,22 @@ export default function AdminProductsPage() {
           <h1 className="text-2xl font-bold text-white mb-1">Products</h1>
           <p className="text-gray-400 text-sm">{products.length} total products</p>
         </div>
-        <Link
-          href="/admin/products/new"
-          className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
-        >
-          <Plus size={16} />
-          Add Product
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/admin/products/quick-add"
+            className="inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+          >
+            <Zap size={16} />
+            Quick Add
+          </Link>
+          <Link
+            href="/admin/products/new"
+            className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+          >
+            <Plus size={16} />
+            Add Product
+          </Link>
+        </div>
       </div>
 
       {deleteError && (
