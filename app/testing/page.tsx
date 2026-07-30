@@ -3,15 +3,15 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
 import {
   ArrowLeft, FlaskConical, Trophy, XCircle, PauseCircle, StickyNote, Trash2,
-  Pencil, TrendingUp, TrendingDown, ExternalLink,
+  Pencil, TrendingUp, TrendingDown, ExternalLink, Calculator, Lock,
 } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { useToast } from '@/app/lib/useToast'
 import { AppLayout } from '@/app/components/AppLayout'
 import { Toast } from '@/app/components/Toast'
+import { ProfitCalculatorPanel } from '@/app/components/ProfitCalculatorPanel'
 import {
   daysSince, updateProductTestStatus, updateProductTestNotes,
   updateProductTestMetrics, deleteProductTest, type ProductTest, type TestStatus,
@@ -20,6 +20,7 @@ import type { Product } from '@/app/types'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 type TestRow = ProductTest & { products: Product | null }
+type PageTab = 'board' | 'calculator'
 
 const COLUMNS: { status: TestStatus; label: string; icon: typeof FlaskConical; color: string; emptyCopy: string }[] = [
   { status: 'testing', label: 'Testing', icon: FlaskConical, color: 'text-indigo-400 border-indigo-500/30 bg-indigo-500/5', emptyCopy: "Nothing being tested yet — add a product to get started!" },
@@ -245,20 +246,25 @@ export default function TestingBoardPage() {
   const [authChecked, setAuthChecked] = useState(false)
   const [tests, setTests] = useState<TestRow[]>([])
   const [loading, setLoading] = useState(true)
-  const router = useRouter()
+  const [activeTab, setActiveTab] = useState<PageTab>('board')
   const { toastMessage, showToast } = useToast()
 
+  // Public shell — the Profit Calculator tab works for anyone, the My
+  // Board tab needs an account since it's personal testing data.
   useEffect(() => {
     const supabase = createBrowserClient()
     supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) {
-        router.push('/auth/login')
-        return
-      }
-      setUser(data.user)
+      setUser(data.user ?? null)
       setAuthChecked(true)
     })
-  }, [router])
+  }, [])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('tab') === 'calculator') {
+      Promise.resolve().then(() => setActiveTab('calculator'))
+    }
+  }, [])
 
   async function loadTests() {
     if (!user) return
@@ -298,73 +304,112 @@ export default function TestingBoardPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Link
-          href="/"
+          href={user ? '/' : '/landing'}
           className="inline-flex items-center gap-2 text-gray-400 hover:text-white text-sm font-medium mb-6 transition-colors"
         >
           <ArrowLeft size={16} />
-          Back to dashboard
+          {user ? 'Back to dashboard' : 'Back to home'}
         </Link>
 
         <div className="flex items-center gap-3 mb-1">
           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shrink-0">
             <FlaskConical size={18} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white">My Testing Board</h1>
+          <h1 className="text-2xl font-bold text-white">Testing Board</h1>
         </div>
-        <p className="text-gray-500 text-sm mb-8">
-          Track products you&apos;re actively testing in your store, from first test to winner (or loser).
+        <p className="text-gray-500 text-sm mb-6">
+          Track products you&apos;re testing and run the numbers before you scale ad spend.
         </p>
 
-        {loading ? (
+        <div className="flex items-center gap-2 mb-8 border-b border-gray-800">
+          <button
+            onClick={() => setActiveTab('board')}
+            className={`flex items-center gap-2 pb-3 pt-1 text-sm font-semibold border-b-2 transition-colors ${
+              activeTab === 'board' ? 'text-white border-indigo-500' : 'text-gray-500 border-transparent hover:text-gray-300'
+            }`}
+          >
+            <FlaskConical size={15} />
+            My Board
+          </button>
+          <button
+            onClick={() => setActiveTab('calculator')}
+            className={`flex items-center gap-2 pb-3 pt-1 text-sm font-semibold border-b-2 transition-colors ${
+              activeTab === 'calculator' ? 'text-white border-indigo-500' : 'text-gray-500 border-transparent hover:text-gray-300'
+            }`}
+          >
+            <Calculator size={15} />
+            Profit Calculator
+          </button>
+        </div>
+
+        {activeTab === 'calculator' ? (
+          <ProfitCalculatorPanel user={user} />
+        ) : !user ? (
+          <div className="text-center py-24">
+            <div className="w-14 h-14 bg-gray-900 border border-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Lock size={22} className="text-gray-600" />
+            </div>
+            <h2 className="text-white font-semibold text-lg mb-1">Sign in to use your Testing Board</h2>
+            <p className="text-gray-500 text-sm mb-6">Track products, notes, and profit right from your dashboard.</p>
+            <Link
+              href="/auth/login"
+              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors"
+            >
+              Sign In
+            </Link>
+          </div>
+        ) : loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
             {COLUMNS.map((c) => (
               <div key={c.status} className="h-64 bg-gray-900 border border-gray-800 rounded-2xl animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-            {COLUMNS.map((column) => {
-              const columnTests = tests.filter((t) => t.status === column.status)
-              const Icon = column.icon
-              return (
-                <div key={column.status} className={`rounded-2xl border p-4 ${column.color}`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Icon size={16} />
-                      <span className="text-white font-semibold text-sm">{column.label}</span>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+              {COLUMNS.map((column) => {
+                const columnTests = tests.filter((t) => t.status === column.status)
+                const Icon = column.icon
+                return (
+                  <div key={column.status} className={`rounded-2xl border p-4 ${column.color}`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Icon size={16} />
+                        <span className="text-white font-semibold text-sm">{column.label}</span>
+                      </div>
+                      <span className="text-xs font-semibold bg-gray-900/60 px-2 py-0.5 rounded-full">{columnTests.length}</span>
                     </div>
-                    <span className="text-xs font-semibold bg-gray-900/60 px-2 py-0.5 rounded-full">{columnTests.length}</span>
+
+                    {columnTests.length === 0 ? (
+                      <div className="py-10 text-center">
+                        <p className="text-gray-500 text-xs leading-relaxed">{column.emptyCopy}</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {columnTests.map((test) => (
+                          <TestCard key={test.id} test={test} onChanged={loadTests} showToast={showToast} />
+                        ))}
+                      </div>
+                    )}
                   </div>
+                )
+              })}
+            </div>
 
-                  {columnTests.length === 0 ? (
-                    <div className="py-10 text-center">
-                      <p className="text-gray-500 text-xs leading-relaxed">{column.emptyCopy}</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {columnTests.map((test) => (
-                        <TestCard key={test.id} test={test} onChanged={loadTests} showToast={showToast} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        {tests.length === 0 && !loading && (
-          <div className="mt-6 text-center">
-            <p className="text-gray-500 text-sm mb-4">
-              Add products to your board from the &ldquo;Track This Product&rdquo; button on the dashboard or any product page.
-            </p>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
-            >
-              Browse products
-            </Link>
-          </div>
+            {tests.length === 0 && (
+              <div className="mt-6 text-center">
+                <p className="text-gray-500 text-sm mb-4">
+                  Add products to your board from the &ldquo;Track This Product&rdquo; button on the dashboard or any product page.
+                </p>
+                <Link
+                  href="/"
+                  className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
+                >
+                  Browse products
+                </Link>
+              </div>
+            )}
+          </>
         )}
       </div>
     </AppLayout>

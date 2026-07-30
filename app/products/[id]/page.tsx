@@ -462,7 +462,7 @@ export default function ProductDetailPage() {
 
         {/* Profit calculator CTA */}
         <Link
-          href={`/calculator?product=${encodeURIComponent(product.title)}&cost=${SUGGESTED_PRODUCT_COST}`}
+          href={`/testing?tab=calculator&product=${encodeURIComponent(product.title)}&cost=${SUGGESTED_PRODUCT_COST}`}
           className="flex items-center gap-3 bg-gradient-to-r from-indigo-600/15 to-gray-900 border border-indigo-500/20 hover:border-indigo-500/40 rounded-2xl px-6 py-5 mb-12 transition-colors"
         >
           <div className="w-10 h-10 bg-indigo-600/20 rounded-lg flex items-center justify-center shrink-0">

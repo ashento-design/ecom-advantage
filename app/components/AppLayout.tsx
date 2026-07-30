@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Rocket, LayoutDashboard, Bookmark, Image as ImageIcon, Search, PlusCircle,
-  Clock, HelpCircle, User, Gift, ChevronsLeft, ChevronsRight, ShieldCheck, LogOut, Calculator,
+  Clock, HelpCircle, User, Gift, ChevronsLeft, ChevronsRight, ShieldCheck, LogOut,
   FlaskConical, FolderOpen,
 } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
@@ -23,7 +23,6 @@ const MAIN_NAV: NavItem[] = [
   { href: '/collections', label: 'Collections', icon: FolderOpen },
   { href: '/ads', label: 'My Ads', icon: ImageIcon },
   { href: '/store-intelligence', label: 'Store Intelligence', icon: Search, isNew: true },
-  { href: '/calculator', label: 'Calculator', icon: Calculator },
   { href: '/testing', label: 'Testing Board', icon: FlaskConical, isNew: true },
   { href: '/request', label: 'Request a Product', icon: PlusCircle },
   { href: '/changelog', label: 'Changelog', icon: Clock },
@@ -35,14 +34,14 @@ const SECONDARY_NAV: NavItem[] = [
   { href: '/referral', label: 'Refer & Earn', icon: Gift },
 ]
 
-// Calculator is a public, free-to-use tool that drives a lot of quick
-// mobile lookups, so it earns a bottom-tab slot; Store Intelligence stays
-// reachable from the sidebar but drops out of the 5-item mobile bar.
+// Calculator now lives inside the Testing Board rather than as its own
+// route, so it no longer needs a bottom-tab slot — Store Intelligence
+// moves back in as the highest-value paid feature for mobile access.
 const MOBILE_TABS: NavItem[] = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/saved', label: 'Saved', icon: Bookmark },
   { href: '/ads', label: 'My Ads', icon: ImageIcon },
-  { href: '/calculator', label: 'Calculator', icon: Calculator },
+  { href: '/store-intelligence', label: 'Intel', icon: Search },
   { href: '/account', label: 'Account', icon: User },
 ]
 
