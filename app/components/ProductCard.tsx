@@ -68,7 +68,7 @@ export function ProductCard({
   }
 
   return (
-    <div className="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-all duration-200 hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5">
+    <div className="group bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-600 transition-all duration-300 ease-out hover:shadow-2xl hover:shadow-indigo-950/40 hover:-translate-y-1">
       <div className="relative h-64 overflow-hidden bg-gray-800">
         <Link href={`/products/${product.id}`} onClick={handleViewProduct} className="absolute inset-0 block">
           <Image
@@ -102,7 +102,7 @@ export function ProductCard({
               NEW
             </span>
           )}
-          {trending && (
+          {trending && product.trend_label !== 'Trending' && (
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-orange-500/20 text-orange-400 border border-orange-500/30">
               <Flame size={12} />
               Trending
@@ -126,7 +126,7 @@ export function ProductCard({
         </div>
       </div>
       <div className="p-4">
-        <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">{product.niche}</span>
@@ -149,9 +149,6 @@ export function ProductCard({
             </span>
           </div>
         </div>
-        <span className="inline-flex items-center text-xs font-medium text-gray-400 mb-3">
-          {launchoryScore.label}
-        </span>
         <p className="text-gray-400 text-sm leading-relaxed mb-4 line-clamp-2">{product.description}</p>
         <div className="flex gap-2">
           <button
