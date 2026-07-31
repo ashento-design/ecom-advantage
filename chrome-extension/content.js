@@ -1,7 +1,15 @@
 // Launchory content script — runs only on AliExpress product pages
 // (see manifest.json content_scripts match pattern: */item/*).
+//
+// AliExpress is a React/Vue SPA: the content script can run before the
+// page has hydrated, and the URL can update client-side without a full
+// navigation. So injection is made deliberately aggressive/redundant —
+// we don't wait on any single signal to decide the button is safe to
+// show, we just keep trying until it's on the page.
 
 const LAUNCHORY_URL = 'https://launchory.io';
+
+console.log('[Launchory] content script loaded on', window.location.href);
 
 function isProductPage() {
   return /\/item\//.test(window.location.pathname);
@@ -46,14 +54,35 @@ function extractPrice() {
   return null;
 }
 
+function buildProduct() {
+  return {
+    title: extractTitle(),
+    image: extractImage(),
+    price: extractPrice(),
+    url: window.location.href,
+  };
+}
+
 function injectAnalyzeButton(product) {
-  if (document.getElementById('launchory-analyze-button')) return;
+  const existing = document.getElementById('launchory-analyze-button');
+  if (existing) {
+    // The page may have re-rendered with better title/image data since we
+    // first injected — keep the button's click target fresh.
+    existing.dataset.launchoryTitle = product.title || '';
+    return existing;
+  }
+
+  if (!document.body) {
+    console.log('[Launchory] document.body not ready yet, cannot inject');
+    return null;
+  }
 
   const button = document.createElement('button');
   button.id = 'launchory-analyze-button';
   button.type = 'button';
   button.innerHTML = '🚀 Analyze with Launchory';
   button.setAttribute('aria-label', 'Analyze this product with Launchory');
+  button.dataset.launchoryTitle = product.title || '';
 
   Object.assign(button.style, {
     position: 'fixed',
@@ -83,39 +112,89 @@ function injectAnalyzeButton(product) {
   });
 
   button.addEventListener('click', () => {
-    const params = new URLSearchParams({
-      url: window.location.href,
-      title: product.title || '',
-    });
-    window.open(`${LAUNCHORY_URL}/analyze?${params.toString()}`, '_blank', 'noopener,noreferrer');
+    // Re-extract at click time in case the SPA has since hydrated with a
+    // better title than whatever we had when the button was first injected.
+    const freshTitle = extractTitle() || button.dataset.launchoryTitle || '';
+    const query = `url=${encodeURIComponent(window.location.href)}&title=${encodeURIComponent(freshTitle)}`;
+    console.log('[Launchory] opening analyze page with', { url: window.location.href, title: freshTitle });
+    window.open(`${LAUNCHORY_URL}/analyze?${query}`, '_blank', 'noopener,noreferrer');
   });
 
   document.body.appendChild(button);
+  console.log('[Launchory] button injected into document.body');
 
-  // Fade in smoothly once the page has settled, rather than popping in
-  // immediately alongside AliExpress's own page-load layout shifts.
   requestAnimationFrame(() => {
     setTimeout(() => {
       button.style.opacity = '1';
       button.style.transform = 'translateY(0)';
     }, 400);
   });
+
+  return button;
+}
+
+function reportProduct(product) {
+  chrome.storage?.local?.set({ launchoryLastProduct: product });
+  chrome.runtime?.sendMessage?.({ type: 'PRODUCT_DETECTED', product }).catch(() => {});
+}
+
+function tryInject(reason) {
+  if (!isProductPage()) return;
+  const product = buildProduct();
+  console.log(`[Launchory] tryInject (${reason})`, product);
+  reportProduct(product);
+  injectAnalyzeButton(product);
+}
+
+function startRetryLoop() {
+  const startedAt = Date.now();
+  const intervalId = setInterval(() => {
+    if (document.getElementById('launchory-analyze-button') || Date.now() - startedAt > 10000) {
+      clearInterval(intervalId);
+      return;
+    }
+    tryInject('retry-interval');
+  }, 500);
+}
+
+function startMutationObserver() {
+  const observer = new MutationObserver(() => {
+    if (document.getElementById('launchory-analyze-button')) {
+      observer.disconnect();
+      return;
+    }
+    // A title element (h1, or AliExpress's og:title meta tag) appearing is
+    // our signal that the SPA has hydrated enough to be worth re-checking.
+    const hasTitleSignal = document.querySelector('h1') || getMetaContent('og:title');
+    if (hasTitleSignal) {
+      tryInject('mutation-observer');
+    }
+  });
+
+  observer.observe(document.documentElement || document, { childList: true, subtree: true });
+
+  // Don't observe forever — bail out after 5s regardless of what we found.
+  setTimeout(() => {
+    observer.disconnect();
+    console.log('[Launchory] MutationObserver timed out after 5s');
+  }, 5000);
 }
 
 function init() {
-  if (!isProductPage()) return;
+  if (!isProductPage()) {
+    console.log('[Launchory] not a product page, skipping', window.location.pathname);
+    return;
+  }
 
-  const product = {
-    title: extractTitle(),
-    image: extractImage(),
-    price: extractPrice(),
-    url: window.location.href,
-  };
+  console.log('[Launchory] init on product page', window.location.href);
 
-  chrome.storage?.local?.set({ launchoryLastProduct: product });
-  chrome.runtime?.sendMessage?.({ type: 'PRODUCT_DETECTED', product }).catch(() => {});
-
-  injectAnalyzeButton(product);
+  // Fire immediately (covers the case where the page is already hydrated),
+  // then layer on a MutationObserver and a fixed-interval retry loop as
+  // fallbacks — whichever one wins first "wins", the rest are no-ops once
+  // the button exists.
+  tryInject('init');
+  startMutationObserver();
+  startRetryLoop();
 }
 
 if (document.readyState === 'loading') {
@@ -123,3 +202,17 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+
+// AliExpress can also navigate client-side between product pages without a
+// full reload (e.g. clicking a "related product" card), which wouldn't
+// otherwise re-run this content script.
+let lastUrl = window.location.href;
+setInterval(() => {
+  if (window.location.href !== lastUrl) {
+    lastUrl = window.location.href;
+    console.log('[Launchory] SPA navigation detected', lastUrl);
+    const existing = document.getElementById('launchory-analyze-button');
+    if (existing) existing.remove();
+    init();
+  }
+}, 1000);

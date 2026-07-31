@@ -4,22 +4,38 @@ const LAUNCHORY_URL = 'https://launchory.io';
 
 document.getElementById('dashboard-link').href = LAUNCHORY_URL;
 
-function render(product, tabUrl) {
-  const content = document.getElementById('content');
-  const isAliExpress = /aliexpress\.(com|us)/.test(tabUrl || '');
-  const isProductPage = isAliExpress && /\/item\//.test(tabUrl || '');
+function cleanTabTitle(tabTitle) {
+  // Fallback title straight from the tab, in case the content script never
+  // got a chance to detect/report anything (e.g. popup opened immediately
+  // on page load, or injection failed for some reason on this page).
+  return (tabTitle || '').replace(/\s*-\s*AliExpress.*$/i, '').trim();
+}
 
-  if (isProductPage && product?.title) {
+function render(product, tab) {
+  const content = document.getElementById('content');
+  const tabUrl = tab?.url || '';
+  const isAliExpress = /aliexpress\.(com|us)/.test(tabUrl);
+  const isProductPage = isAliExpress && /\/item\//.test(tabUrl);
+
+  console.log('[Launchory popup]', { tabUrl, isAliExpress, isProductPage, product });
+
+  // Show the analyze action for ANY AliExpress product page, whether or
+  // not the content script has reported a product yet — falling back to
+  // the tab's own title (always available via chrome.tabs.query, no
+  // content-script communication required).
+  const title = product?.title || cleanTabTitle(tab?.title);
+
+  if (isProductPage) {
     content.innerHTML = `
-      <p class="label">Detected product</p>
+      <p class="label">${product?.title ? 'Detected product' : 'AliExpress product page'}</p>
       <p class="product-title"></p>
       <button class="btn btn-primary" id="analyze-btn">🚀 Analyze This Product</button>
     `;
-    content.querySelector('.product-title').textContent = product.title;
+    content.querySelector('.product-title').textContent = title || 'This product';
 
     document.getElementById('analyze-btn').addEventListener('click', () => {
-      const params = new URLSearchParams({ url: tabUrl, title: product.title || '' });
-      chrome.tabs.create({ url: `${LAUNCHORY_URL}/analyze?${params.toString()}` });
+      const query = `url=${encodeURIComponent(tabUrl)}&title=${encodeURIComponent(title)}`;
+      chrome.tabs.create({ url: `${LAUNCHORY_URL}/analyze?${query}` });
     });
   } else if (isAliExpress) {
     content.innerHTML = `
@@ -43,6 +59,6 @@ chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
     // Only trust the stored product if it was detected on this same tab's
     // current URL — otherwise it's stale from a previously viewed product.
     const isFresh = product?.url === tabUrl;
-    render(isFresh ? product : null, tabUrl);
+    render(isFresh ? product : null, tab);
   });
 });
