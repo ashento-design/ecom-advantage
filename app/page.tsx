@@ -168,8 +168,25 @@ function DashboardContent() {
   const {
     selectedProduct, analysisResult, analysisLoading, analysisError,
     showUpgradeModal, upgrading, upgradeError,
-    analyzeProduct, closeModal, setShowUpgradeModal, handleUpgrade,
+    analyzeProduct, presentAnalysis, closeModal, setShowUpgradeModal, handleUpgrade,
   } = useProductAnalysis()
+
+  // Picks up a product handed off from the /analyze page (the Chrome
+  // extension flow's "Generate Ad Creative" button) instead of the normal
+  // click-a-product-card path — the analysis already ran there, so this
+  // just opens the modal with it rather than re-running /api/analyze.
+  useEffect(() => {
+    const raw = sessionStorage.getItem('launchoryPendingAnalysis')
+    if (!raw) return
+    sessionStorage.removeItem('launchoryPendingAnalysis')
+    try {
+      const { product, result } = JSON.parse(raw)
+      presentAnalysis(product, result)
+    } catch {
+      // malformed payload — ignore, nothing to recover
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [trackingProduct, setTrackingProduct] = useState<Product | null>(null)
   const [trackSaving, setTrackSaving] = useState(false)

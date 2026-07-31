@@ -31,6 +31,16 @@ export function useProductAnalysis() {
     setAnalysisError(null)
   }
 
+  // Opens the modal with an analysis that was already run elsewhere (e.g.
+  // the Chrome extension's /analyze page handing a product off to the
+  // dashboard) instead of calling /api/analyze again.
+  function presentAnalysis(product: Product, result: AnalysisResult) {
+    setSelectedProduct(product)
+    setAnalysisResult(result)
+    setAnalysisError(null)
+    setAnalysisLoading(false)
+  }
+
   async function analyzeProduct(product: Product) {
     setSelectedProduct(product)
     setAnalysisResult(null)
@@ -96,6 +106,7 @@ export function useProductAnalysis() {
     upgrading,
     upgradeError,
     analyzeProduct,
+    presentAnalysis,
     closeModal,
     setShowUpgradeModal,
     handleUpgrade,

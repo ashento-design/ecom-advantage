@@ -2,8 +2,6 @@
 
 const LAUNCHORY_URL = 'https://launchory.io';
 
-document.getElementById('dashboard-link').href = LAUNCHORY_URL;
-
 function cleanTabTitle(tabTitle) {
   // Fallback title straight from the tab, in case the content script never
   // got a chance to detect/report anything (e.g. popup opened immediately
@@ -29,7 +27,8 @@ function render(product, tab) {
     content.innerHTML = `
       <p class="label">${product?.title ? 'Detected product' : 'AliExpress product page'}</p>
       <p class="product-title"></p>
-      <button class="btn btn-primary" id="analyze-btn">🚀 Analyze This Product</button>
+      <button class="btn btn-primary" id="analyze-btn">Analyze This Product →</button>
+      <p class="powered-by">Powered by Launchory AI</p>
     `;
     content.querySelector('.product-title').textContent = title || 'This product';
 
@@ -40,11 +39,13 @@ function render(product, tab) {
   } else if (isAliExpress) {
     content.innerHTML = `
       <p class="empty-state">Open a specific product page on AliExpress to analyze it with Launchory.</p>
+      <a class="dashboard-link" id="dashboard-link" href="${LAUNCHORY_URL}">Open Launchory Dashboard →</a>
     `;
   } else {
     content.innerHTML = `
-      <p class="empty-state">Visit AliExpress to analyze products.</p>
-      <button class="btn btn-secondary" id="visit-btn">Go to AliExpress</button>
+      <p class="empty-state">Visit an AliExpress product page to analyze it with AI.</p>
+      <button class="btn btn-secondary" id="visit-btn">Open AliExpress</button>
+      <a class="dashboard-link" id="dashboard-link" href="${LAUNCHORY_URL}">Open Launchory Dashboard →</a>
     `;
     document.getElementById('visit-btn').addEventListener('click', () => {
       chrome.tabs.create({ url: 'https://www.aliexpress.com' });

@@ -2,7 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import {
   Rocket, ArrowRight, TrendingUp, Zap, Target, Megaphone,
-  DollarSign, Search, Flame, Bookmark, Package,
+  DollarSign, Search, Flame, Bookmark, Package, Puzzle,
 } from 'lucide-react'
 import { ReferralCapture } from '@/app/components/ReferralCapture'
 import { TestimonialCard, type TestimonialData } from '@/app/components/TestimonialCard'
@@ -34,6 +34,7 @@ const features = [
   { icon: Megaphone, title: 'Video Hook Ideas', description: 'Scroll-stopping hook ideas for your UGC and short-form video ads.' },
   { icon: TrendingUp, title: 'Competition Analysis', description: 'Know how saturated a niche is before you spend a dollar on ads.' },
   { icon: DollarSign, title: 'Pricing Suggestions', description: 'AI-recommended price ranges based on margin and market data.' },
+  { icon: Puzzle, title: 'Chrome Extension', description: 'Analyze any AliExpress product instantly without leaving the page. One click to get full AI analysis.' },
 ]
 
 async function getFeaturedTestimonials(): Promise<TestimonialData[]> {
@@ -103,9 +104,18 @@ export default async function LandingPage() {
         />
 
         <div className="relative max-w-6xl mx-auto px-6 text-center">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 text-xs font-medium mb-6">
-            <Zap size={12} />
-            Now in Beta — Free to try
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 text-xs font-medium">
+              <Zap size={12} />
+              Now in Beta — Free to try
+            </div>
+            <Link
+              href="/extension"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-transparent border border-gray-700 hover:border-gray-500 text-gray-300 hover:text-white text-xs font-medium transition-colors"
+            >
+              <Puzzle size={12} />
+              Chrome Extension Available
+            </Link>
           </div>
           <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-6 max-w-3xl mx-auto">
             Find Winning Products Before Your Competitors
@@ -196,7 +206,7 @@ export default async function LandingPage() {
       <section id="features" className="max-w-6xl mx-auto px-6 py-24 scroll-mt-16">
         <div className="text-center mb-14">
           <h2 className="text-3xl font-bold text-white mb-3">Everything you need to find winners</h2>
-          <p className="text-gray-400">One platform, from discovery to launch.</p>
+          <p className="text-gray-400">One platform, from discovery to launch — plus a Chrome extension for one-click research on AliExpress.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature) => (
