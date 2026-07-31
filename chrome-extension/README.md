@@ -5,6 +5,7 @@ Analyze any AliExpress product instantly with Launchory AI — without leaving t
 ## What it does
 
 - **On AliExpress product pages** (`aliexpress.com/item/...`), a floating "🚀 Analyze with Launchory" button appears in the bottom-right corner. Clicking it opens `launchory.io/analyze` in a new tab, pre-filled with the product's title and URL, and runs a full AI analysis (demand score, competition, ad angles, hooks).
+  The content script runs on all AliExpress pages (`www.aliexpress.com`, `aliexpress.com`, any `*.aliexpress.com` subdomain, and the `.us` TLD variants) rather than being restricted by the manifest to `/item/` URLs — this is more reliable since AliExpress is an SPA that can change the URL client-side without a full page load. The script itself checks `window.location.href` for `/item/` before doing anything.
 - **The extension popup** (click the toolbar icon) shows the detected product on the current tab with a one-click "Analyze This Product" button, or a link to AliExpress if you're not currently on it.
 - **On first install**, the extension opens `launchory.io/welcome` to help new users get oriented.
 
