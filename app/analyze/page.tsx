@@ -24,9 +24,16 @@ export default function AnalyzePage() {
   // directly rather than useSearchParams, to avoid a Suspense boundary.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+    const urlParam = params.get('url') ?? ''
+    const titleParam = params.get('title') ?? ''
+    console.log('[Launchory /analyze] params received:', {
+      search: window.location.search,
+      url: urlParam,
+      title: titleParam,
+    })
     Promise.resolve().then(() => {
-      setProductUrl(params.get('url') ?? '')
-      setProductTitle(params.get('title') ?? '')
+      setProductUrl(urlParam)
+      setProductTitle(titleParam)
       setParamsRead(true)
     })
   }, [])
