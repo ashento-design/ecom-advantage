@@ -35,12 +35,14 @@ function renderButton(key) {
     bottom: 90px;
     right: 24px;
     z-index: 2147483647;
-    width: 160px;
     height: 44px;
-    display: flex;
+    box-sizing: border-box;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 7px;
+    padding: 0 22px;
+    white-space: nowrap;
     background: #4F46E5;
     color: #ffffff;
     border-radius: 9999px;
@@ -53,7 +55,7 @@ function renderButton(key) {
     user-select: none;
     animation: launchory-pulse 0.7s ease-in-out 1;
   `;
-  wrap.innerHTML = '<span style="white-space:nowrap;">🚀 Analyze with Launchory</span>';
+  wrap.innerHTML = '<span>🚀 Analyze with Launchory</span>';
 
   wrap.addEventListener('mouseenter', () => {
     wrap.style.background = '#6366F1';
@@ -69,26 +71,38 @@ function renderButton(key) {
   });
 
   const closeBtn = document.createElement('button');
-  closeBtn.textContent = '×';
   closeBtn.setAttribute('aria-label', 'Dismiss Launchory button');
+  closeBtn.innerHTML =
+    '<svg width="9" height="9" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+    '<path d="M1 1L9 9M9 1L1 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' +
+    '</svg>';
   closeBtn.style.cssText = `
     position: absolute;
-    top: -6px;
-    right: -6px;
-    width: 18px;
-    height: 18px;
+    top: -7px;
+    right: -7px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
-    background: #1f2937;
-    color: #9ca3af;
-    border: 1px solid #374151;
-    font-size: 12px;
-    line-height: 1;
+    background: #f9fafb;
+    color: #4b5563;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     padding: 0;
+    margin: 0;
+    transition: background 150ms ease, color 150ms ease;
   `;
+  closeBtn.addEventListener('mouseenter', () => {
+    closeBtn.style.background = '#ffffff';
+    closeBtn.style.color = '#111827';
+  });
+  closeBtn.addEventListener('mouseleave', () => {
+    closeBtn.style.background = '#f9fafb';
+    closeBtn.style.color = '#4b5563';
+  });
   closeBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     chrome.storage?.local?.set({ [key]: true });
