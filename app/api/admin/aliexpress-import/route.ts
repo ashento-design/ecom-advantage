@@ -85,6 +85,33 @@ function slugHints(url: URL) {
     .trim()
 }
 
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400'
+
+// Quick Add must never block on a missing image — when scraping doesn't
+// turn up an og:image, search Unsplash for something relevant to the
+// product title/niche, and fall back to a generic placeholder if that
+// also comes up empty (no key configured, no results, request failure).
+async function findFallbackImage(query: string): Promise<string> {
+  const accessKey = process.env.UNSPLASH_ACCESS_KEY
+  if (!accessKey || !query.trim()) return FALLBACK_IMAGE
+
+  try {
+    const res = await fetch(
+      `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=squarish`,
+      {
+        headers: { Authorization: `Client-ID ${accessKey}` },
+        signal: AbortSignal.timeout(8000),
+      }
+    )
+    if (!res.ok) return FALLBACK_IMAGE
+    const data = await res.json()
+    const photo = Array.isArray(data.results) ? data.results[0] : null
+    return photo?.urls?.regular || photo?.urls?.small || FALLBACK_IMAGE
+  } catch {
+    return FALLBACK_IMAGE
+  }
+}
+
 /**
  * POST /api/admin/aliexpress-import
  * Admin auth required. Body: { url }. Scrapes an AliExpress product page
@@ -163,11 +190,20 @@ Return exactly this JSON structure:
   const niche = NICHES.includes(result.niche) ? result.niche : NICHES[0]
   const demandScore = Math.min(95, Math.max(70, Math.round(Number(result.demand_score) || 80)))
   const trendLabel = ['Hot', 'Trending', 'Rising'].includes(result.trend_label) ? result.trend_label : 'Rising'
+  const title = result.title || scraped?.title || ''
+
+  let imageUrl = scraped?.image || ''
+  let imageIsFallback = false
+  if (!imageUrl) {
+    imageUrl = await findFallbackImage(title || niche)
+    imageIsFallback = true
+  }
 
   return NextResponse.json({
-    title: result.title || scraped?.title || '',
+    title,
     description: result.description || scraped?.description || '',
-    image_url: scraped?.image || '',
+    image_url: imageUrl,
+    image_is_fallback: imageIsFallback,
     niche,
     demand_score: demandScore,
     trend_label: trendLabel,

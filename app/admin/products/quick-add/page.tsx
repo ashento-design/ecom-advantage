@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Zap, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react'
+import { Zap, CheckCircle2, AlertCircle, ArrowLeft, ImageIcon, Search, Loader2, Check } from 'lucide-react'
 import { useAdminGuard } from '@/app/lib/useAdminGuard'
 import { AdminLayout } from '@/app/components/admin/AdminLayout'
 
@@ -10,46 +10,86 @@ const TREND_OPTIONS = ['Hot', 'Trending', 'Rising']
 
 type AddedProduct = { title: string; niche: string; demand_score: number }
 
+type ImportedProduct = {
+  title: string
+  description: string
+  image_url: string
+  image_is_fallback: boolean
+  niche: string
+  supplier_url: string
+}
+
+type UnsplashSuggestion = { id: string; thumb: string; full: string; alt: string }
+
 export default function QuickAddPage() {
   const { user, adminChecked } = useAdminGuard()
   const [url, setUrl] = useState('')
   const [demandScore, setDemandScore] = useState(85)
   const [trendLabel, setTrendLabel] = useState('Hot')
+  const [importing, setImporting] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [added, setAdded] = useState<AddedProduct[]>([])
 
-  async function handleQuickAdd() {
+  const [imported, setImported] = useState<ImportedProduct | null>(null)
+  const [imageUrl, setImageUrl] = useState('')
+  const [showImageEditor, setShowImageEditor] = useState(false)
+  const [manualImageUrl, setManualImageUrl] = useState('')
+  const [unsplashResults, setUnsplashResults] = useState<UnsplashSuggestion[]>([])
+  const [unsplashLoading, setUnsplashLoading] = useState(false)
+  const [unsplashUnavailable, setUnsplashUnavailable] = useState(false)
+
+  function resetImportState() {
+    setImported(null)
+    setImageUrl('')
+    setShowImageEditor(false)
+    setManualImageUrl('')
+    setUnsplashResults([])
+    setUnsplashUnavailable(false)
+  }
+
+  async function handleImport() {
     if (!url.trim()) return
-    setSaving(true)
+    setImporting(true)
     setError(null)
+    resetImportState()
     try {
       const importRes = await fetch('/api/admin/aliexpress-import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: url.trim() }),
       })
-      const imported = await importRes.json().catch(() => null)
+      const data = await importRes.json().catch(() => null)
       if (!importRes.ok) {
         setError(
-          imported?.error === 'invalid_aliexpress_url'
+          data?.error === 'invalid_aliexpress_url'
             ? 'That doesn’t look like an AliExpress product URL.'
             : 'Could not import this product. Please try again.'
         )
         return
       }
-      if (!imported.image_url) {
-        setError('Couldn’t detect a product image for this one — use the full Add Product form instead so you can set an image manually.')
-        return
-      }
 
+      setImported(data)
+      setImageUrl(data.image_url)
+    } catch {
+      setError('Network error. Please try again.')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  async function handleSave() {
+    if (!imported) return
+    setSaving(true)
+    setError(null)
+    try {
       const createRes = await fetch('/api/admin/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: imported.title,
           description: imported.description,
-          image_url: imported.image_url,
+          image_url: imageUrl,
           niche: imported.niche,
           supplier_url: imported.supplier_url,
           demand_score: demandScore,
@@ -65,11 +105,30 @@ export default function QuickAddPage() {
 
       setAdded((prev) => [{ title: imported.title, niche: imported.niche, demand_score: demandScore }, ...prev])
       setUrl('')
+      resetImportState()
     } catch {
       setError('Network error. Please try again.')
     } finally {
       setSaving(false)
     }
+  }
+
+  function searchUnsplash(query: string) {
+    if (!query.trim()) return
+    setUnsplashLoading(true)
+    setUnsplashUnavailable(false)
+    fetch(`/api/admin/unsplash-search?q=${encodeURIComponent(query)}`)
+      .then(async (res) => {
+        const data = await res.json().catch(() => null)
+        if (!res.ok) {
+          setUnsplashUnavailable(data?.error === 'not_configured')
+          setUnsplashResults([])
+          return
+        }
+        setUnsplashResults(Array.isArray(data?.results) ? data.results : [])
+      })
+      .catch(() => setUnsplashResults([]))
+      .finally(() => setUnsplashLoading(false))
   }
 
   if (!adminChecked) {
@@ -103,7 +162,7 @@ export default function QuickAddPage() {
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && !saving && handleQuickAdd()}
+            onKeyDown={(e) => e.key === 'Enter' && !importing && handleImport()}
             placeholder="Paste AliExpress product URL…"
             autoFocus
             className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors text-sm"
@@ -152,23 +211,148 @@ export default function QuickAddPage() {
           </div>
         )}
 
-        <button
-          onClick={handleQuickAdd}
-          disabled={saving || !url.trim()}
-          className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
-        >
-          {saving ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Importing &amp; saving…
-            </>
-          ) : (
-            <>
-              <Zap size={16} />
-              Auto-fill &amp; Save
-            </>
-          )}
-        </button>
+        {!imported ? (
+          <button
+            onClick={handleImport}
+            disabled={importing || !url.trim()}
+            className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+          >
+            {importing ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Importing…
+              </>
+            ) : (
+              <>
+                <Zap size={16} />
+                Auto-fill
+              </>
+            )}
+          </button>
+        ) : (
+          <div className="space-y-4 border-t border-gray-800 pt-5">
+            <div className="flex gap-3">
+              <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-gray-800 border border-gray-700 shrink-0">
+                {imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={imageUrl} alt={imported.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-600">
+                    <ImageIcon size={20} />
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-white text-sm font-medium leading-snug line-clamp-2">{imported.title}</p>
+                <p className="text-gray-500 text-xs mt-1">{imported.niche}</p>
+                {imported.image_is_fallback && (
+                  <p className="text-amber-400/80 text-[11px] mt-1">Using a stock image — no product photo was found.</p>
+                )}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowImageEditor((v) => !v)
+                if (!unsplashResults.length && !unsplashLoading) searchUnsplash(imported.title)
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-white transition-colors"
+            >
+              <ImageIcon size={13} />
+              Change Image
+            </button>
+
+            {showImageEditor && (
+              <div className="space-y-3 bg-gray-800/50 border border-gray-700 rounded-xl p-3.5">
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={manualImageUrl}
+                    onChange={(e) => setManualImageUrl(e.target.value)}
+                    placeholder="Paste an image URL…"
+                    className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-emerald-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => manualImageUrl.trim() && setImageUrl(manualImageUrl.trim())}
+                    disabled={!manualImageUrl.trim()}
+                    className="px-3 py-2 bg-gray-700 hover:bg-gray-600 disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-colors"
+                  >
+                    Use
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => searchUnsplash(imported.title)}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-white transition-colors"
+                  >
+                    <Search size={12} />
+                    Search Unsplash for &ldquo;{imported.title}&rdquo;
+                  </button>
+                  {unsplashLoading && <Loader2 size={12} className="text-gray-500 animate-spin" />}
+                </div>
+
+                {unsplashUnavailable ? (
+                  <p className="text-[11px] text-gray-500">Unsplash suggestions aren&rsquo;t configured.</p>
+                ) : unsplashResults.length > 0 ? (
+                  <div className="grid grid-cols-4 gap-2">
+                    {unsplashResults.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setImageUrl(s.full)}
+                        className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                          imageUrl === s.full ? 'border-emerald-500' : 'border-transparent hover:border-gray-600'
+                        }`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={s.thumb} alt={s.alt} className="w-full h-full object-cover" />
+                        {imageUrl === s.full && (
+                          <div className="absolute inset-0 bg-emerald-500/20 flex items-center justify-center">
+                            <Check size={16} className="text-white" />
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setUrl('')
+                  resetImportState()
+                }}
+                className="px-4 py-3 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-sm font-medium rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-800 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+              >
+                {saving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Saving…
+                  </>
+                ) : (
+                  <>
+                    <Zap size={16} />
+                    Save Product
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {added.length > 0 && (
