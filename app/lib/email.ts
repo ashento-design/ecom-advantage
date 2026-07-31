@@ -129,6 +129,26 @@ export async function sendWelcomeEmail(to: string, name: string, dashboardUrl: s
   })
 }
 
+export async function sendVideoWaitlistConfirmationEmail(to: string) {
+  const resend = getResendClient()
+  const html = emailShell(`
+    <h1 style="color:#ffffff; font-size:20px; margin:0 0 12px 0;">You're on the list for Launchory Video Ads 🎬</h1>
+    <p style="margin:0 0 16px 0;">
+      We're building a Video Ad Generator that turns any winning product into a scroll-stopping video ad — same one-click workflow as our image ad generator, just moving.
+    </p>
+    <p style="margin:0;">
+      We'll email you the moment it's ready to try. No action needed in the meantime.
+    </p>
+  `)
+
+  return resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "You're on the list for Launchory Video Ads",
+    html,
+  })
+}
+
 export async function sendUpgradeConfirmationEmail(to: string, name: string, dashboardUrl: string) {
   const resend = getResendClient()
   const firstName = name?.split(' ')[0] || 'there'

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Sparkles, Download, Trash2, Zap, Heart, Tag, Pencil, Check, X, Plus } from 'lucide-react'
+import { ArrowLeft, Sparkles, Download, Trash2, Zap, Heart, Tag, Pencil, Check, X, Plus, Video, Mail, Image as ImageIcon } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { AppLayout } from '@/app/components/AppLayout'
 import type { AdFormat } from '@/app/types'
@@ -178,6 +178,78 @@ function AdCard({
   )
 }
 
+function VideoAdsComingSoon() {
+  const [email, setEmail] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!email.trim()) return
+    setSubmitting(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/video-waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        setError(data?.error === 'invalid_email' ? 'Please enter a valid email address.' : 'Something went wrong. Please try again.')
+        return
+      }
+      setSubmitted(true)
+    } catch {
+      setError('Network error. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-10 text-center max-w-lg mx-auto">
+      <div className="w-14 h-14 bg-indigo-600/15 border border-indigo-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+        <Video size={22} className="text-indigo-400" />
+      </div>
+      <h2 className="text-white font-bold text-lg mb-2">Video Ad Generator — Coming Soon</h2>
+      <p className="text-gray-400 text-sm mb-6">
+        Generate scroll-stopping video ads from your winning products. Join the waitlist to be notified when it launches.
+      </p>
+
+      {submitted ? (
+        <p className="inline-flex items-center gap-2 text-emerald-400 text-sm font-medium">
+          <Check size={15} />
+          You&apos;re on the list — we&apos;ll email you when it&apos;s ready.
+        </p>
+      ) : (
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="you@example.com"
+              className="w-full bg-gray-800 border border-gray-700 rounded-xl pl-10 pr-4 py-2.5 text-white placeholder-gray-500 text-sm outline-none focus:border-indigo-500"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="shrink-0 inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors"
+          >
+            {submitting ? 'Joining…' : 'Join Waitlist'}
+          </button>
+        </form>
+      )}
+      {error && <p className="text-red-400 text-xs mt-3">{error}</p>}
+    </div>
+  )
+}
+
 export default function AdsGalleryPage() {
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
@@ -190,6 +262,7 @@ export default function AdsGalleryPage() {
   const [productFilter, setProductFilter] = useState<string>('all')
   const [tagFilter, setTagFilter] = useState<string>('all')
   const [sortBy, setSortBy] = useState<SortOption>('newest')
+  const [activeGalleryTab, setActiveGalleryTab] = useState<'image' | 'video'>('image')
   const router = useRouter()
 
   useEffect(() => {
@@ -311,7 +384,33 @@ export default function AdsGalleryPage() {
         </Link>
 
         <h1 className="text-3xl font-bold text-white mb-2">My Ads</h1>
-        <p className="text-gray-400 mb-8">AI-generated ad creatives from your product analyses.</p>
+        <p className="text-gray-400 mb-6">AI-generated ad creatives from your product analyses.</p>
+
+        <div className="flex items-center gap-6 border-b border-gray-800 mb-8">
+          <button
+            onClick={() => setActiveGalleryTab('image')}
+            className={`flex items-center gap-2 pb-3 pt-1 text-sm font-semibold border-b-2 transition-colors ${
+              activeGalleryTab === 'image' ? 'text-white border-indigo-500' : 'text-gray-500 border-transparent hover:text-gray-300'
+            }`}
+          >
+            <ImageIcon size={15} />
+            Image Ads
+          </button>
+          <button
+            onClick={() => setActiveGalleryTab('video')}
+            className={`flex items-center gap-2 pb-3 pt-1 text-sm font-semibold border-b-2 transition-colors ${
+              activeGalleryTab === 'video' ? 'text-white border-indigo-500' : 'text-gray-500 border-transparent hover:text-gray-300'
+            }`}
+          >
+            <Video size={15} />
+            Video Ads <span className="text-gray-600 font-normal">(Coming Soon)</span>
+          </button>
+        </div>
+
+        {activeGalleryTab === 'video' ? (
+          <VideoAdsComingSoon />
+        ) : (
+          <>
 
         {!loading && !loadError && ads.length > 0 && (
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
@@ -426,6 +525,8 @@ export default function AdsGalleryPage() {
               />
             ))}
           </div>
+        )}
+          </>
         )}
       </div>
     </AppLayout>
