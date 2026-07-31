@@ -7,9 +7,11 @@ import { useParams } from 'next/navigation'
 import {
   ArrowLeft, ExternalLink, Zap, Bookmark, Flame, TrendingUp, ArrowUp, AlertCircle,
   Lock, Share2, Check, Calculator, ThumbsUp, Lightbulb, Store, FlaskConical,
+  Copy, Search, Users, Target,
 } from 'lucide-react'
 import { SupplierQuickLinks } from '@/app/components/SupplierQuickLinks'
 import { AdSearchButtons } from '@/app/components/AdSearchButtons'
+import { RecentlyViewedRow } from '@/app/components/RecentlyViewedRow'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { useSavedProducts } from '@/app/lib/useSavedProducts'
 import { useProductAnalysis } from '@/app/lib/useProductAnalysis'
@@ -18,6 +20,8 @@ import { computeLaunchoryScore } from '@/app/lib/launchoryScore'
 import { getSaturationInfo } from '@/app/lib/saturation'
 import { getAdActivityLevel } from '@/app/lib/adSearchLinks'
 import { addProductTest, type TestStatus } from '@/app/lib/productTests'
+import { buildSupplierLinks } from '@/app/lib/supplierLinks'
+import { getRecentlyViewed, recordRecentlyViewed, type RecentlyViewedProduct } from '@/app/lib/recentlyViewed'
 import { AppLayout } from '@/app/components/AppLayout'
 import { ProductCard } from '@/app/components/ProductCard'
 import { ScoreRing } from '@/app/components/ScoreRing'
@@ -28,6 +32,9 @@ import { TrackProductModal } from '@/app/components/TrackProductModal'
 import { Toast } from '@/app/components/Toast'
 import type { Product, AnalysisResult } from '@/app/types'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
+
+// Manually update as the real user count grows.
+const ACTIVE_USER_COUNT = '1,000+'
 
 // Products don't carry real per-product supplier cost data, so this is a
 // flat, disclosed heuristic default (typical low-ticket dropshipping item
@@ -54,8 +61,11 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
+  const [titleCopied, setTitleCopied] = useState(false)
   const [trackingProduct, setTrackingProduct] = useState<Product | null>(null)
   const [trackSaving, setTrackSaving] = useState(false)
+  const [isTopInNiche, setIsTopInNiche] = useState(false)
+  const [recentlyViewed, setRecentlyViewed] = useState<RecentlyViewedProduct[]>([])
 
   const { toastMessage, showToast } = useToast()
   const { savedIds, toggleSave } = useSavedProducts(user, showToast)
@@ -100,6 +110,21 @@ export default function ProductDetailPage() {
     }
   }
 
+  async function handleCopyTitle() {
+    if (!product) return
+    try {
+      await navigator.clipboard.writeText(product.title)
+      setTitleCopied(true)
+      setTimeout(() => setTitleCopied(false), 2000)
+    } catch {
+      // clipboard access denied — silently ignore
+    }
+  }
+
+  useEffect(() => {
+    Promise.resolve().then(() => setRecentlyViewed(getRecentlyViewed()))
+  }, [])
+
   useEffect(() => {
     if (!authChecked || !productId) return
 
@@ -118,6 +143,12 @@ export default function ProductDetailPage() {
         return
       }
       setProduct(productData)
+      recordRecentlyViewed({
+        id: productData.id,
+        title: productData.title,
+        image_url: productData.image_url,
+        niche: productData.niche,
+      })
 
       const { data: related } = await supabase
         .from('products')
@@ -126,6 +157,16 @@ export default function ProductDetailPage() {
         .neq('id', productId)
         .limit(3)
       setRelatedProducts(related ?? [])
+
+      const { data: nicheProducts } = await supabase
+        .from('products')
+        .select('id, demand_score, views, saves_count, trend_label')
+        .eq('niche', productData.niche)
+      const ranked = [...(nicheProducts ?? [])].sort(
+        (a, b) => computeLaunchoryScore(b).score - computeLaunchoryScore(a).score
+      )
+      const rank = ranked.findIndex((p) => p.id === productId)
+      setIsTopInNiche(rank !== -1 && rank < 5)
 
       if (user) {
         const { data: analyses } = await supabase
@@ -270,15 +311,41 @@ export default function ProductDetailPage() {
               <Image src={product.image_url} alt={product.title} fill sizes="(max-width: 1024px) 100vw, 66vw" className="object-cover" priority />
             </div>
 
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
               <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">{product.niche}</span>
               <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${trend.color}`}>
                 {trend.icon}
                 {product.trend_label}
               </span>
+              {isTopInNiche && (product.trend_label === 'Hot' || product.trend_label === 'Trending') && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
+                  <TrendingUp size={12} />
+                  Trending in {product.niche}
+                </span>
+              )}
             </div>
 
-            <h1 className="text-2xl md:text-3xl font-bold text-white mb-4 leading-snug">{product.title}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-white mb-3 leading-snug">{product.title}</h1>
+
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              <button
+                onClick={handleCopyTitle}
+                className="inline-flex items-center gap-1.5 bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-gray-600 text-gray-300 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+              >
+                {titleCopied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                {titleCopied ? 'Copied!' : 'Copy Product Title'}
+              </button>
+              <a
+                href={buildSupplierLinks(product.title).aliexpress}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-gray-600 text-gray-300 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+              >
+                <Search size={12} />
+                Search on AliExpress
+              </a>
+            </div>
+
             <p className="text-gray-400 text-base leading-relaxed">{product.description}</p>
           </div>
 
@@ -368,23 +435,43 @@ export default function ProductDetailPage() {
           </div>
 
           {!user ? (
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 text-center">
-              <div className="w-14 h-14 bg-indigo-600/15 border border-indigo-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Lock size={22} className="text-indigo-400" />
+            <div className="relative bg-gray-900 border border-gray-800 rounded-2xl p-6 overflow-hidden">
+              <div className="pointer-events-none select-none blur-sm opacity-50">
+                <div className="flex items-center gap-2 mb-3">
+                  <Target size={15} className="text-indigo-400" />
+                  <span className="text-white font-semibold text-sm">Ad Angles</span>
+                </div>
+                <div className="p-3.5 bg-gray-800/60 border border-gray-700/60 rounded-xl">
+                  <p className="text-gray-300 text-sm">
+                    {product.niche} shoppers convert fastest on a &ldquo;stop scrolling, watch this&rdquo; hook &mdash; here&rsquo;s the exact angle.
+                  </p>
+                </div>
               </div>
-              <p className="text-white font-semibold mb-1.5 max-w-sm mx-auto">
-                Sign up free to see AI analysis, ad angles, hooks, and more
-              </p>
-              <p className="text-gray-500 text-sm mb-6">
-                Get instant demand scores, competition analysis, and ready-to-use ad angles for every product.
-              </p>
-              <Link
-                href="/auth/signup"
-                className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-5 py-3 rounded-xl transition-colors"
-              >
-                <Zap size={15} />
-                Get Free Analysis
-              </Link>
+
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-950/60 backdrop-blur-[1px] p-6">
+                <div className="text-center max-w-sm">
+                  <div className="w-14 h-14 bg-indigo-600/15 border border-indigo-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Lock size={22} className="text-indigo-400" />
+                  </div>
+                  <p className="text-white font-semibold mb-1.5">
+                    Sign up free to see all 3 ad angles, hooks, target audience, and more
+                  </p>
+                  <p className="text-gray-500 text-sm mb-2">
+                    Get instant demand scores, competition analysis, and ready-to-use ad angles for every product.
+                  </p>
+                  <p className="inline-flex items-center gap-1.5 text-gray-500 text-xs mb-6">
+                    <Users size={12} />
+                    Join {ACTIVE_USER_COUNT} dropshippers already using Launchory
+                  </p>
+                  <Link
+                    href="/auth/signup"
+                    className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-5 py-3 rounded-xl transition-colors"
+                  >
+                    <Zap size={15} />
+                    Get Free Analysis
+                  </Link>
+                </div>
+              </div>
             </div>
           ) : displayedAnalysis ? (
             <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-6">
@@ -507,6 +594,8 @@ export default function ProductDetailPage() {
             )}
           </div>
         )}
+
+        <RecentlyViewedRow products={recentlyViewed.filter((p) => p.id !== productId)} />
       </div>
     </AppLayout>
   )
