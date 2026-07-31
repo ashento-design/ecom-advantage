@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Launchory</title>
+<style>
+  :root {
+    color-scheme: dark;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    width: 300px;
+    background: #0a0a0f;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #e5e7eb;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px;
+    border-bottom: 1px solid #1f2937;
+  }
+  .logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .brand {
+    font-weight: 700;
+    font-size: 15px;
+    color: #ffffff;
+  }
+  .content {
+    padding: 16px;
+  }
+  .label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #6366f1;
+    margin: 0 0 6px 0;
+  }
+  .product-title {
+    font-size: 13px;
+    color: #ffffff;
+    line-height: 1.4;
+    margin: 0 0 14px 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .empty-state {
+    font-size: 13px;
+    color: #9ca3af;
+    line-height: 1.5;
+    margin: 0 0 14px 0;
+  }
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: #ffffff;
+  }
+  .btn-secondary {
+    background: #1f2937;
+    color: #e5e7eb;
+    border: 1px solid #374151;
+    margin-top: 8px;
+  }
+  .footer {
+    padding: 12px 16px;
+    border-top: 1px solid #1f2937;
+  }
+  .footer a {
+    display: block;
+    text-align: center;
+    font-size: 12px;
+    color: #9ca3af;
+    text-decoration: none;
+    padding: 8px;
+    border-radius: 8px;
+  }
+  .footer a:hover {
+    background: #1f2937;
+    color: #ffffff;
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">🚀</div>
+    <div class="brand">Launchory</div>
+  </div>
+
+  <div class="content" id="content">
+    <p class="empty-state">Loading…</p>
+  </div>
+
+  <div class="footer">
+    <a id="dashboard-link" href="#">Open Launchory Dashboard →</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
