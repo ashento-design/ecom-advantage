@@ -227,6 +227,35 @@ function DashboardContent() {
   ]
   const niches = ['All', ...orderedNiches]
 
+  const nicheCounts = products.reduce<Record<string, number>>((acc, p) => {
+    acc[p.niche] = (acc[p.niche] ?? 0) + 1
+    return acc
+  }, {})
+
+  const featuredToday = [...products]
+    .filter((p) => p.is_featured && p.demand_score >= 88)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 3)
+
+  const topNiches = (() => {
+    const scoresByNiche: Record<string, number[]> = {}
+    for (const p of products) {
+      const score = computeLaunchoryScore(p).score
+      ;(scoresByNiche[p.niche] ??= []).push(score)
+    }
+    return Object.entries(scoresByNiche)
+      .map(([niche, scores]) => ({ niche, avgScore: scores.reduce((a, b) => a + b, 0) / scores.length }))
+      .sort((a, b) => b.avgScore - a.avgScore)
+      .slice(0, 3)
+  })()
+
+  const lastUpdatedAt = products.length > 0
+    ? new Date(Math.max(...products.map((p) => new Date(p.created_at).getTime())))
+    : null
+  const lastUpdatedLabel = lastUpdatedAt
+    ? `Updated ${lastUpdatedAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
+    : 'Updated today'
+
   useEffect(() => {
     // Skip the network round-trip on a fresh cache hit — the feed rarely
     // changes minute to minute, so a 5-minute cache avoids re-fetching the
@@ -480,13 +509,18 @@ function DashboardContent() {
           <h1 className="text-3xl font-bold text-white mb-2">Product Research Feed</h1>
           <div className="flex items-center gap-3 flex-wrap">
             <p className="text-gray-400">Curated daily. AI-analyzed. Ready to test.</p>
+            {!pageLoading && !pageError && (
+              <span className="text-gray-500 text-sm">
+                Showing {totalCount.toLocaleString()} winning product{totalCount === 1 ? '' : 's'}
+              </span>
+            )}
             <span className="inline-flex items-center gap-1.5 text-gray-500 text-xs">
               <Clock size={12} />
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-500" />
               </span>
-              Updated today
+              {lastUpdatedLabel}
             </span>
           </div>
         </div>
@@ -506,6 +540,52 @@ function DashboardContent() {
             </div>
           ))}
         </div>
+
+        {featuredToday.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-base leading-none">⭐</span>
+              <span className="text-white font-semibold text-sm">Featured Today</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {featuredToday.map((product) => (
+                <div key={product.id} className="relative">
+                  <span className="absolute -top-2 -right-2 z-10 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-yellow-400 to-amber-500 text-gray-900 shadow-lg shadow-amber-900/30">
+                    ⭐ Featured
+                  </span>
+                  <ProductCard
+                    product={product}
+                    saved={savedIds.has(product.id)}
+                    onToggleSave={toggleSave}
+                    onAnalyze={analyzeProduct}
+                    onTrack={setTrackingProduct}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {topNiches.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp size={15} className="text-indigo-400" />
+              <span className="text-white font-semibold text-sm">What&apos;s trending</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {topNiches.map((n, i) => (
+                <span
+                  key={n.niche}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-sm font-medium bg-gray-900 border border-gray-800 text-gray-300"
+                >
+                  {i === 0 && <span>🔥</span>}
+                  {n.niche}
+                  <span className="text-gray-500 text-xs">· {Math.round(n.avgScore)} avg score</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {recommendedProducts.length > 0 && (
           <div className="mb-8">
@@ -558,7 +638,7 @@ function DashboardContent() {
                     : 'bg-gray-900 text-gray-400 border border-gray-800 hover:border-gray-600 hover:text-white'
                 }`}
               >
-                {niche}
+                {niche} ({niche === 'All' ? products.length : nicheCounts[niche] ?? 0})
               </button>
             ))}
           </div>
