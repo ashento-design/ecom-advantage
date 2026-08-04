@@ -1,6 +1,6 @@
 import { getServiceRoleClient } from '@/app/lib/supabaseAdmin'
 
-export type AnalyticsEventType = 'page_view' | 'product_analyzed' | 'ad_generated' | 'store_analyzed' | 'upgrade_clicked'
+export type AnalyticsEventType = 'page_view' | 'product_analyzed' | 'ad_generated' | 'store_analyzed' | 'upgrade_clicked' | 'video_script_generated'
 
 // Best-effort, fire-and-forget-safe: never throws, so a tracking failure
 // never breaks the feature it's attached to.
