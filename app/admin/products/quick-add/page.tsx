@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Zap, CheckCircle2, AlertCircle, ArrowLeft, ImageIcon, Search, Loader2, Check } from 'lucide-react'
 import { useAdminGuard } from '@/app/lib/useAdminGuard'
@@ -38,6 +38,31 @@ export default function QuickAddPage() {
   const [unsplashResults, setUnsplashResults] = useState<UnsplashSuggestion[]>([])
   const [unsplashLoading, setUnsplashLoading] = useState(false)
   const [unsplashUnavailable, setUnsplashUnavailable] = useState(false)
+
+  // Picks up a draft handed off from the Discover Products page ("Edit &
+  // Add") instead of the normal paste-a-URL flow — skips straight to the
+  // review step with the AI-generated fields already filled in.
+  useEffect(() => {
+    const raw = sessionStorage.getItem('launchoryDiscoveredDraft')
+    if (!raw) return
+    sessionStorage.removeItem('launchoryDiscoveredDraft')
+    try {
+      const draft = JSON.parse(raw)
+      setImported({
+        title: draft.title ?? '',
+        description: draft.description ?? '',
+        image_url: draft.image_url ?? '',
+        image_is_fallback: false,
+        niche: draft.niche ?? '',
+        supplier_url: '',
+      })
+      setImageUrl(draft.image_url ?? '')
+      if (draft.demand_score) setDemandScore(draft.demand_score)
+      if (draft.trend_label && TREND_OPTIONS.includes(draft.trend_label)) setTrendLabel(draft.trend_label)
+    } catch {
+      // malformed payload — ignore, nothing to recover
+    }
+  }, [])
 
   function resetImportState() {
     setImported(null)

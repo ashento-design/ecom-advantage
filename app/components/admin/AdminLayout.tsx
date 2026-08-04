@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Package, Users, Rocket, ArrowLeft, LogOut, BarChart3, PackagePlus, ListChecks, Quote } from 'lucide-react'
+import { LayoutDashboard, Package, Users, Rocket, ArrowLeft, LogOut, BarChart3, PackagePlus, ListChecks, Quote, Compass } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 const navItems = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { label: 'Products', href: '/admin/products', icon: Package },
+  { label: 'Discover Products', href: '/admin/discover', icon: Compass },
   { label: 'Requests', href: '/admin/requests', icon: PackagePlus },
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Waitlist', href: '/admin/waitlist', icon: ListChecks },
