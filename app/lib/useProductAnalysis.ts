@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { trackMetaEvent } from '@/app/components/MetaPixel'
+import { trackTikTokEvent } from '@/app/components/TikTokPixel'
 import type { Product, AnalysisResult } from '@/app/types'
 
 const ANALYZE_ERROR_MESSAGES: Record<string, string> = {
@@ -80,6 +82,8 @@ export function useProductAnalysis() {
   async function handleUpgrade() {
     setUpgrading(true)
     setUpgradeError(null)
+    trackMetaEvent('InitiateCheckout')
+    trackTikTokEvent('InitiateCheckout')
     try {
       const res = await fetch('/api/stripe/checkout', { method: 'POST' })
       const data = await res.json().catch(() => null)

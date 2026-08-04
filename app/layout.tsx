@@ -4,6 +4,8 @@ import { Analytics } from "@vercel/analytics/next";
 import { NavigationProgressBar } from "@/app/components/NavigationProgressBar";
 import { AnalyticsPageViewTracker } from "@/app/components/AnalyticsPageViewTracker";
 import { CookieConsent } from "@/app/components/CookieConsent";
+import { MetaPixel } from "@/app/components/MetaPixel";
+import { TikTokPixel } from "@/app/components/TikTokPixel";
 import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"] });
@@ -40,6 +42,8 @@ export default function RootLayout({
       <body className={`${geist.className} bg-gray-950 text-white antialiased`}>
         <NavigationProgressBar />
         <AnalyticsPageViewTracker />
+        <MetaPixel />
+        <TikTokPixel />
         {children}
         <CookieConsent />
         <Analytics />

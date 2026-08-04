@@ -7,6 +7,8 @@ import { createBrowserClient } from '@/app/lib/supabase'
 import { useSavedProducts } from '@/app/lib/useSavedProducts'
 import { useProductAnalysis } from '@/app/lib/useProductAnalysis'
 import { useToast } from '@/app/lib/useToast'
+import { trackMetaEvent } from '@/app/components/MetaPixel'
+import { trackTikTokEvent } from '@/app/components/TikTokPixel'
 import { AppLayout } from '@/app/components/AppLayout'
 import { ProductCard, ProductCardSkeleton } from '@/app/components/ProductCard'
 import { Pagination } from '@/app/components/Pagination'
@@ -187,6 +189,20 @@ function DashboardContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Fires the retargeting pixels' Purchase event on the Stripe success
+  // redirect (see success_url in /api/stripe/checkout), then strips the
+  // query param so refreshing the dashboard doesn't re-fire it.
+  useEffect(() => {
+    if (searchParams.get('payment') !== 'success') return
+    trackMetaEvent('Purchase')
+    trackTikTokEvent('Purchase')
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('payment')
+    const qs = params.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   const [trackingProduct, setTrackingProduct] = useState<Product | null>(null)
   const [trackSaving, setTrackSaving] = useState(false)

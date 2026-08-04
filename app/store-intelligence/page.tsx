@@ -9,6 +9,8 @@ import { createBrowserClient } from '@/app/lib/supabase'
 import { AppLayout } from '@/app/components/AppLayout'
 import { UpgradeModal } from '@/app/components/UpgradeModal'
 import { StoreAnalysisCard, type StoreAnalysis } from '@/app/components/StoreAnalysisCard'
+import { trackMetaEvent } from '@/app/components/MetaPixel'
+import { trackTikTokEvent } from '@/app/components/TikTokPixel'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 const EXAMPLE_STORES = ['gymshark.com', 'colourpop.com', 'ohpolly.com', 'fashionnova.com']
@@ -122,6 +124,8 @@ export default function StoreIntelligencePage() {
 
   async function handleUpgrade() {
     setUpgrading(true)
+    trackMetaEvent('InitiateCheckout')
+    trackTikTokEvent('InitiateCheckout')
     try {
       const res = await fetch('/api/stripe/checkout', { method: 'POST' })
       const data = await res.json()

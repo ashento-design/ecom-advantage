@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Zap, CheckCircle, Check, User, Mail, Lock, Pencil, X } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { AppLayout } from '@/app/components/AppLayout'
+import { trackMetaEvent } from '@/app/components/MetaPixel'
+import { trackTikTokEvent } from '@/app/components/TikTokPixel'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 type EmailPreferences = {
@@ -105,6 +107,8 @@ export default function AccountPage() {
 
   async function handleUpgrade() {
     setUpgrading(true)
+    trackMetaEvent('InitiateCheckout')
+    trackTikTokEvent('InitiateCheckout')
     try {
       const res = await fetch('/api/stripe/checkout', { method: 'POST' })
       const data = await res.json()

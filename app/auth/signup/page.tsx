@@ -7,6 +7,8 @@ import { Rocket, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import { createBrowserClient } from '@/app/lib/supabase'
 import { WELCOME_TOAST_KEY } from '@/app/lib/welcomeToast'
 import { getStoredReferralCode, REFERRAL_CODE_KEY } from '@/app/lib/referral'
+import { trackMetaEvent } from '@/app/components/MetaPixel'
+import { trackTikTokEvent } from '@/app/components/TikTokPixel'
 
 export default function SignupPage() {
   const [fullName, setFullName] = useState('')
@@ -82,6 +84,9 @@ export default function SignupPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, name: fullName }),
       }).catch((err) => console.error('Failed to trigger welcome email:', err))
+
+      trackMetaEvent('Lead')
+      trackTikTokEvent('CompleteRegistration')
 
       sessionStorage.setItem(WELCOME_TOAST_KEY, '1')
       router.push('/')
