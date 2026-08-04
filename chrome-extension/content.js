@@ -1,5 +1,4 @@
 // Launchory content script — runs on all AliExpress pages (see manifest.json).
-console.log('[Launchory] Content script loaded on:', window.location.href);
 
 const LAUNCHORY_URL = 'https://launchory.io';
 const BUTTON_ID = 'launchory-analyze-button';
@@ -107,7 +106,6 @@ function renderButton(key) {
     e.stopPropagation();
     chrome.storage?.local?.set({ [key]: true });
     wrap.remove();
-    console.log('[Launchory] Button dismissed for this product');
   });
 
   wrap.appendChild(closeBtn);
@@ -116,7 +114,6 @@ function renderButton(key) {
 
 function injectButton() {
   if (document.getElementById(BUTTON_ID)) return;
-  console.log('[Launchory] Injecting button...');
 
   const key = dismissKey(window.location.href);
   if (!chrome.storage?.local) {
@@ -124,10 +121,7 @@ function injectButton() {
     return;
   }
   chrome.storage.local.get([key], (result) => {
-    if (result[key]) {
-      console.log('[Launchory] Button was dismissed on this product, not re-showing');
-      return;
-    }
+    if (result[key]) return;
     renderButton(key);
   });
 }

@@ -15,8 +15,6 @@ function render(product, tab) {
   const isAliExpress = /aliexpress\.(com|us)/.test(tabUrl);
   const isProductPage = isAliExpress && /\/item\//.test(tabUrl);
 
-  console.log('[Launchory popup]', { tabUrl, isAliExpress, isProductPage, product });
-
   // Show the analyze action for ANY AliExpress product page, whether or
   // not the content script has reported a product yet — falling back to
   // the tab's own title (always available via chrome.tabs.query, no

@@ -1,8 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Launchory — Product Research",
+  "short_name": "Launchory",
   "version": "1.0.0",
-  "description": "Analyze any AliExpress product instantly with Launchory AI",
+  "description": "Analyze any AliExpress product instantly with Launchory AI — get demand scores, ad angles, hooks, and pricing in seconds.",
+  "homepage_url": "https://launchory.io",
+  "author": "Launchory",
   "permissions": ["activeTab", "storage"],
   "host_permissions": [
     "https://www.aliexpress.com/*",
