@@ -28,8 +28,8 @@ export async function POST(request: NextRequest) {
   }
 
   // Best-effort: record email 1 of the onboarding drip sequence so the
-  // /api/cron/onboarding-emails job knows not to treat this user as brand
-  // new when it later checks who's still owed email 1.
+  // /api/cron/master job knows not to treat this user as brand new when it
+  // later checks who's still owed email 1.
   try {
     const supabase = await createServerClient()
     const { data: { user } } = await supabase.auth.getUser()

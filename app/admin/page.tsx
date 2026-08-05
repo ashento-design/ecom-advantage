@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Package, Users, Zap, Plus, List, DollarSign, Crown, Image as ImageIcon, Mail, Sunrise, CalendarDays, UserPlus, Send } from 'lucide-react'
+import { Package, Users, Zap, Plus, List, DollarSign, Crown, Image as ImageIcon, Mail, Sunrise, CalendarDays, UserPlus, Send, FlaskConical } from 'lucide-react'
 import { useAdminGuard } from '@/app/lib/useAdminGuard'
 import { AdminLayout } from '@/app/components/admin/AdminLayout'
 
@@ -28,6 +28,9 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [triggering, setTriggering] = useState<string | null>(null)
   const [cronResults, setCronResults] = useState<Record<string, string>>({})
+  const [masterRunning, setMasterRunning] = useState(false)
+  const [masterResult, setMasterResult] = useState<Record<string, unknown> | null>(null)
+  const [masterError, setMasterError] = useState<string | null>(null)
 
   async function handleTriggerCron(key: string, endpoint: string) {
     setTriggering(key)
@@ -43,6 +46,25 @@ export default function AdminDashboardPage() {
       setCronResults((prev) => ({ ...prev, [key]: 'Network error' }))
     } finally {
       setTriggering(null)
+    }
+  }
+
+  async function handleDryRunMasterCron() {
+    setMasterRunning(true)
+    setMasterError(null)
+    setMasterResult(null)
+    try {
+      const res = await fetch('/api/cron/master?dry_run=true', { method: 'POST' })
+      const data = await res.json().catch(() => null)
+      if (!res.ok) {
+        setMasterError(data?.error ?? res.statusText)
+        return
+      }
+      setMasterResult(data)
+    } catch {
+      setMasterError('Network error')
+    } finally {
+      setMasterRunning(false)
     }
   }
 
@@ -151,13 +173,64 @@ export default function AdminDashboardPage() {
         </Link>
       </div>
 
-      <div className="mt-8 bg-gray-900 border border-gray-800 rounded-xl p-5">
+      <div className="mt-8 bg-gray-900 border border-indigo-500/20 rounded-xl p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <FlaskConical size={16} className="text-indigo-400" />
+          <h2 className="text-white font-semibold text-sm">Master Cron — Dry Run</h2>
+        </div>
+        <p className="text-gray-500 text-xs mb-4">
+          Runs the exact same logic as the scheduled 8am UTC cron (onboarding drip, then daily digest, then weekly digest on Mondays) but sends nothing — use this to verify what the next real run would do.
+        </p>
+        <button
+          onClick={handleDryRunMasterCron}
+          disabled={masterRunning}
+          className="inline-flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition-colors"
+        >
+          {masterRunning ? (
+            <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : (
+            <FlaskConical size={12} />
+          )}
+          {masterRunning ? 'Running dry run…' : 'Preview Next Run (Dry Run)'}
+        </button>
+
+        {masterError && (
+          <p className="text-red-400 text-xs mt-3">Error: {masterError}</p>
+        )}
+
+        {masterResult && (
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="bg-gray-800/60 border border-gray-700 rounded-lg p-3">
+              <p className="text-gray-500 text-[11px] mb-1">Would send: onboarding</p>
+              <p className="text-white text-lg font-bold">{String(masterResult.onboarding_sent)}</p>
+            </div>
+            <div className="bg-gray-800/60 border border-gray-700 rounded-lg p-3">
+              <p className="text-gray-500 text-[11px] mb-1">Would send: daily</p>
+              <p className="text-white text-lg font-bold">{String(masterResult.daily_sent)}</p>
+            </div>
+            <div className="bg-gray-800/60 border border-gray-700 rounded-lg p-3">
+              <p className="text-gray-500 text-[11px] mb-1">Would send: weekly</p>
+              <p className="text-white text-lg font-bold">{String(masterResult.weekly_sent)}</p>
+            </div>
+            <div className="bg-gray-800/60 border border-gray-700 rounded-lg p-3">
+              <p className="text-gray-500 text-[11px] mb-1">Errors</p>
+              <p className="text-white text-lg font-bold">{Array.isArray(masterResult.errors) ? masterResult.errors.length : 0}</p>
+            </div>
+            <details className="col-span-2 sm:col-span-4 bg-gray-800/60 border border-gray-700 rounded-lg p-3">
+              <summary className="text-gray-400 text-xs font-medium cursor-pointer">Full dry-run response (would_send / would_skip)</summary>
+              <pre className="text-gray-500 text-[11px] mt-2 overflow-x-auto whitespace-pre-wrap break-words">{JSON.stringify(masterResult, null, 2)}</pre>
+            </details>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6 bg-gray-900 border border-gray-800 rounded-xl p-5">
         <div className="flex items-center gap-2 mb-1">
           <Mail size={16} className="text-emerald-400" />
-          <h2 className="text-white font-semibold text-sm">Trigger Cron Manually</h2>
+          <h2 className="text-white font-semibold text-sm">Trigger Individual Email Type (Manual, Real Send)</h2>
         </div>
         <p className="text-gray-500 text-xs mb-5">
-          Fires the same send these emails run on their own schedule (now consolidated into one daily cron) — useful for testing without waiting.
+          Sends real emails immediately for one type only — useful for testing a single template without waiting for the schedule. Not run automatically (only /api/cron/master is scheduled).
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {CRON_JOBS.map((job) => (

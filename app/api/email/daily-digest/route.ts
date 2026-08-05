@@ -4,9 +4,10 @@ import { sendDailyDigest } from '@/app/lib/digest'
 
 /**
  * POST /api/email/daily-digest
- * Admin auth required — manual trigger for the same digest send the
- * daily-digest cron runs automatically. Sends the top 3 products (by
- * Launchory Score) to every opted-in user.
+ * Admin auth required — manual-only testing route, always sends
+ * immediately with no "already sent today" guard (that guard lives in
+ * /api/cron/master, the only scheduled route). Sends the top 3 products
+ * (by Launchory Score) to every opted-in user.
  */
 export async function POST(request: Request) {
   const admin = await getAdminUser()

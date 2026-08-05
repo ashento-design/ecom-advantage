@@ -6,14 +6,9 @@ import {
   sendOnboardingDay8Email,
   type FeedProductSummary,
 } from '@/app/lib/emails'
+import { resolveNextOnboardingStep } from '@/app/lib/onboardingSchedule'
 
 type SupabaseAdmin = ReturnType<typeof getServiceRoleClient>
-
-// Maps onboarding_emails.email_number -> minimum days since signup before
-// it's due. Email 1 (welcome) is sent immediately at signup by
-// /api/email/welcome, not by this cron.
-const STEPS = [2, 3, 4, 5] as const
-const MIN_DAYS: Record<(typeof STEPS)[number], number> = { 2: 2, 3: 4, 4: 6, 5: 8 }
 
 async function getTopProduct(supabaseAdmin: SupabaseAdmin): Promise<FeedProductSummary | null> {
   const { data } = await supabaseAdmin
@@ -34,94 +29,89 @@ async function getTopProducts(supabaseAdmin: SupabaseAdmin, count: number): Prom
   return data ?? []
 }
 
+// Manual-trigger version of the onboarding drip (called from the admin
+// panel's "Onboarding Emails" test button via /api/email/onboarding-emails
+// — the scheduled version lives in app/lib/masterCron.ts, which shares the
+// same step-resolution logic from app/lib/onboardingSchedule.ts). Sends at
+// most ONE onboarding email per user per call — a user behind on the
+// sequence gets their next-due email now and the rest on subsequent calls,
+// exactly like the scheduled cron, so triggering this manually can never
+// stack multiple emails on one user.
 export async function sendOnboardingEmails(origin: string) {
   const supabaseAdmin = getServiceRoleClient()
-  const results: Record<string, { sent: number; skipped: number; failed: number }> = {}
 
-  // Cached across recipients within a single run so we don't re-query the
-  // feed once per user.
-  let day2Product: FeedProductSummary | null = null
-  let day6Products: FeedProductSummary[] | null = null
+  const { data: profiles, error: profilesError } = await supabaseAdmin
+    .from('profiles')
+    .select('id, email, full_name, plan, analyses_used, created_at')
+    .order('created_at', { ascending: true })
 
-  for (const emailNumber of STEPS) {
-    const cutoff = new Date()
-    cutoff.setUTCDate(cutoff.getUTCDate() - MIN_DAYS[emailNumber])
+  if (profilesError) {
+    console.error('[onboarding-emails] Failed to load profiles:', profilesError.message)
+    return { sent: 0, skipped: 0, failed: 0, by_type: {} as Record<string, number> }
+  }
 
-    // Scans all profiles old enough for this step, same unbounded-scan
-    // pattern as sendWeeklyDigest — fine at current scale, and staying
-    // unbounded means a user is still caught up correctly even if the cron
-    // was broken or paused for a while.
-    const { data: candidates, error: candidatesError } = await supabaseAdmin
-      .from('profiles')
-      .select('id, email, full_name, plan, analyses_used, created_at')
-      .lte('created_at', cutoff.toISOString())
+  const candidates = profiles ?? []
+  const candidateIds = candidates.map((c) => c.id)
+  const sentByUser = new Map<string, Set<number>>()
+  if (candidateIds.length > 0) {
+    const { data: sentRows } = await supabaseAdmin
+      .from('onboarding_emails')
+      .select('user_id, email_number')
+      .in('user_id', candidateIds)
+    for (const row of sentRows ?? []) {
+      if (!sentByUser.has(row.user_id)) sentByUser.set(row.user_id, new Set())
+      sentByUser.get(row.user_id)!.add(row.email_number)
+    }
+  }
 
-    if (candidatesError) {
-      console.error(`[onboarding-emails] Failed to load candidates for email ${emailNumber}:`, candidatesError.message)
-      results[`email_${emailNumber}`] = { sent: 0, skipped: 0, failed: 0 }
+  let day2Product: FeedProductSummary | null | undefined
+  let day6Products: FeedProductSummary[] | undefined
+
+  let sent = 0
+  let skipped = 0
+  let failed = 0
+  const byType: Record<string, number> = {}
+
+  for (const profile of candidates) {
+    if (!profile.email) {
+      skipped += 1
       continue
     }
 
-    const candidateIds = (candidates ?? []).map((c) => c.id)
-    const alreadySentIds = new Set<string>()
-    if (candidateIds.length > 0) {
-      const { data: alreadySent } = await supabaseAdmin
+    const sentNumbers = sentByUser.get(profile.id) ?? new Set<number>()
+    const step = resolveNextOnboardingStep(profile, sentNumbers)
+    if (!step) {
+      skipped += 1
+      continue
+    }
+
+    try {
+      if (step.number === 2) {
+        if (day2Product === undefined) day2Product = await getTopProduct(supabaseAdmin)
+        if (!day2Product) { skipped += 1; continue }
+        await sendOnboardingDay2Email(profile.email, profile.full_name ?? '', day2Product, origin)
+      } else if (step.number === 3) {
+        await sendOnboardingDay4Email(profile.email, profile.full_name ?? '', origin)
+      } else if (step.number === 4) {
+        if (day6Products === undefined) day6Products = await getTopProducts(supabaseAdmin, 3)
+        if (!day6Products.length) { skipped += 1; continue }
+        await sendOnboardingDay6Email(profile.email, profile.full_name ?? '', day6Products, origin)
+      } else {
+        await sendOnboardingDay8Email(profile.email, profile.full_name ?? '', profile.analyses_used ?? 0, origin)
+      }
+
+      const { error: trackError } = await supabaseAdmin
         .from('onboarding_emails')
-        .select('user_id')
-        .eq('email_number', emailNumber)
-        .in('user_id', candidateIds)
-      for (const row of alreadySent ?? []) alreadySentIds.add(row.user_id)
+        .insert({ user_id: profile.id, email_number: step.number })
+      if (trackError) throw trackError
+
+      sent += 1
+      byType[step.type] = (byType[step.type] ?? 0) + 1
+    } catch (err) {
+      console.error(`[onboarding-emails] Failed to send ${step.type} to ${profile.email}:`, err)
+      failed += 1
     }
-
-    let sent = 0
-    let skipped = 0
-    let failed = 0
-
-    for (const profile of candidates ?? []) {
-      if (alreadySentIds.has(profile.id) || !profile.email) {
-        skipped += 1
-        continue
-      }
-      // Email 2: only for users who haven't run an analysis yet.
-      if (emailNumber === 2 && (profile.analyses_used ?? 0) > 0) {
-        skipped += 1
-        continue
-      }
-      // Email 5: only makes sense as an upgrade push for free-plan users.
-      if (emailNumber === 5 && profile.plan !== 'free') {
-        skipped += 1
-        continue
-      }
-
-      try {
-        if (emailNumber === 2) {
-          if (!day2Product) day2Product = await getTopProduct(supabaseAdmin)
-          if (!day2Product) { skipped += 1; continue }
-          await sendOnboardingDay2Email(profile.email, profile.full_name ?? '', day2Product, origin)
-        } else if (emailNumber === 3) {
-          await sendOnboardingDay4Email(profile.email, profile.full_name ?? '', origin)
-        } else if (emailNumber === 4) {
-          if (!day6Products) day6Products = await getTopProducts(supabaseAdmin, 3)
-          if (!day6Products || day6Products.length === 0) { skipped += 1; continue }
-          await sendOnboardingDay6Email(profile.email, profile.full_name ?? '', day6Products, origin)
-        } else {
-          await sendOnboardingDay8Email(profile.email, profile.full_name ?? '', profile.analyses_used ?? 0, origin)
-        }
-
-        const { error: trackError } = await supabaseAdmin
-          .from('onboarding_emails')
-          .insert({ user_id: profile.id, email_number: emailNumber })
-        if (trackError) throw trackError
-
-        sent += 1
-      } catch (err) {
-        console.error(`[onboarding-emails] Failed to send email ${emailNumber} to ${profile.email}:`, err)
-        failed += 1
-      }
-    }
-
-    results[`email_${emailNumber}`] = { sent, skipped, failed }
   }
 
-  return results
+  return { sent, skipped, failed, by_type: byType }
 }

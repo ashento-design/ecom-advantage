@@ -1,7 +1,7 @@
 -- Tracks which onboarding drip-sequence emails (1-5) each user has already
--- received. There's no job queue, so the daily cron in
--- /api/cron/onboarding-emails scans profiles by signup age and uses this
--- table to avoid re-sending an email a user already got.
+-- received. There's no job queue, so the daily cron in /api/cron/master
+-- scans profiles by signup age and uses this table to avoid re-sending an
+-- email a user already got (see app/lib/onboardingSchedule.ts).
 
 CREATE TABLE IF NOT EXISTS onboarding_emails (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

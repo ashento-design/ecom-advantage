@@ -4,8 +4,9 @@ import { sendOnboardingEmails } from '@/app/lib/onboarding'
 
 /**
  * POST /api/email/onboarding-emails
- * Admin auth required — manual trigger for the same onboarding email send
- * the onboarding-emails cron runs automatically.
+ * Admin auth required — manual-only testing route. Not scheduled; the
+ * onboarding drip normally runs as part of /api/cron/master. Sends at most
+ * one onboarding email per user per call (see app/lib/onboardingSchedule.ts).
  */
 export async function POST(request: Request) {
   const admin = await getAdminUser()
