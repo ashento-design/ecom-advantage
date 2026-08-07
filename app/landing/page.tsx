@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import {
-  Rocket, ArrowRight, TrendingUp, Zap, Target, Megaphone,
-  DollarSign, Search, Flame, Bookmark, Package, Puzzle,
+  Rocket, ArrowRight, TrendingUp, Zap, Image as ImageIcon, Video, BarChart3, Globe,
+  FlaskConical, Search, Activity, Megaphone, Puzzle, Flame, Bookmark, Package,
 } from 'lucide-react'
 import { ReferralCapture } from '@/app/components/ReferralCapture'
 import { TestimonialCard, type TestimonialData } from '@/app/components/TestimonialCard'
@@ -21,20 +21,22 @@ export const metadata: Metadata = {
 }
 
 const stats = [
-  { value: '15+', label: 'Products Daily' },
-  { value: '3 sec', label: 'Analysis Time' },
-  { value: 'Free', label: 'To Start' },
-  { value: '$29', label: 'Pro Plan' },
+  { value: '250+', label: 'Winning Products' },
+  { value: 'AI-Powered', label: 'Product Analysis' },
+  { value: '10 Sec', label: 'To Find a Winner' },
+  { value: '1-Click', label: 'Ad Creative Generation' },
 ]
 
 const features = [
-  { icon: Search, title: 'Winning Product Feed', description: 'A curated, daily feed of trending Shopify products so you never miss the next winner.' },
-  { icon: Zap, title: 'AI Product Analyzer', description: 'Get instant demand scores and competition analysis powered by GPT-4o-mini.' },
-  { icon: Target, title: 'Ad Angle Generator', description: 'AI-generated ad angles tailored to each product, ready to plug into your campaigns.' },
-  { icon: Megaphone, title: 'Video Hook Ideas', description: 'Scroll-stopping hook ideas for your UGC and short-form video ads.' },
-  { icon: TrendingUp, title: 'Competition Analysis', description: 'Know how saturated a niche is before you spend a dollar on ads.' },
-  { icon: DollarSign, title: 'Pricing Suggestions', description: 'AI-recommended price ranges based on margin and market data.' },
-  { icon: Puzzle, title: 'Chrome Extension', description: 'Analyze any AliExpress product instantly without leaving the page. One click to get full AI analysis.' },
+  { icon: TrendingUp, title: 'Winning Product Feed', description: 'Daily curated feed of trending Shopify products across 12 niches. Never run out of winning ideas.' },
+  { icon: Zap, title: 'AI Product Analyzer', description: 'Instant demand scores, competition analysis, pricing suggestions, and market saturation — in seconds.' },
+  { icon: ImageIcon, title: 'Ad Creative Generator', description: 'Generate scroll-stopping image ads using AI. Pick your angle, format, and style — ready to run.' },
+  { icon: Video, title: 'Video Ad Scripts', description: 'Get full scene-by-scene video scripts with voiceover copy and music suggestions for TikTok and Reels.' },
+  { icon: BarChart3, title: 'Store Intelligence', description: "Analyze any Shopify store's estimated revenue, top products, and winning strategies instantly." },
+  { icon: Globe, title: 'Chrome Extension', description: 'Analyze any AliExpress product without leaving the page. One click to get full AI insights.' },
+  { icon: FlaskConical, title: 'Testing Board', description: "Track which products you're testing, log your results, and calculate profit margins in one place." },
+  { icon: Search, title: 'Supplier Finder', description: 'Find your product on AliExpress, CJDropshipping, and Zendrop instantly with one click.' },
+  { icon: Activity, title: 'Market Saturation Meter', description: 'See how many stores are selling a product before you test it. Find low-competition winners faster.' },
 ]
 
 async function getFeaturedTestimonials(): Promise<TestimonialData[]> {
@@ -45,6 +47,7 @@ async function getFeaturedTestimonials(): Promise<TestimonialData[]> {
       .select('name, role, company, content, rating, avatar_initials')
       .eq('is_featured', true)
       .order('created_at', { ascending: false })
+      .limit(3)
     if (error) throw error
     return data ?? []
   } catch (err) {
@@ -54,9 +57,9 @@ async function getFeaturedTestimonials(): Promise<TestimonialData[]> {
 }
 
 const steps = [
-  { number: '1', title: 'Find a product', description: 'Browse today’s curated feed of trending Shopify products.' },
-  { number: '2', title: 'Click AI Analyze', description: 'Run a one-click AI analysis on any product that catches your eye.' },
-  { number: '3', title: 'Get instant insights', description: 'Demand score, competition level, pricing, ad angles, and hooks — instantly.' },
+  { number: '1', icon: Search, title: "Browse Today's Winners", description: 'Open Launchory and browse 250+ curated winning products updated daily across 12 niches.' },
+  { number: '2', icon: Zap, title: 'Analyze with AI', description: 'Click AI Analyze on any product. Get demand scores, ad angles, hooks, competition data, and pricing — in under 10 seconds.' },
+  { number: '3', icon: Megaphone, title: 'Launch Your Campaign', description: 'Generate image ads or video scripts, find your supplier, and launch with confidence.' },
 ]
 
 export default async function LandingPage() {
@@ -83,7 +86,7 @@ export default async function LandingPage() {
               </Link>
               <Link
                 href="/auth/signup"
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition-colors"
+                className="px-4 py-2 border border-indigo-500 text-indigo-400 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 text-sm font-medium rounded-xl transition-colors"
               >
                 Start for Free
               </Link>
@@ -104,11 +107,7 @@ export default async function LandingPage() {
         />
 
         <div className="relative max-w-6xl mx-auto px-6 text-center">
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-600/10 border border-indigo-500/30 text-indigo-400 text-xs font-medium">
-              <Zap size={12} />
-              Now in Beta — Free to try
-            </div>
+          <div className="flex items-center justify-center mb-6">
             <Link
               href="/extension"
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-transparent border border-gray-700 hover:border-gray-500 text-gray-300 hover:text-white text-xs font-medium transition-colors"
@@ -118,25 +117,30 @@ export default async function LandingPage() {
             </Link>
           </div>
           <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-6 max-w-3xl mx-auto">
-            Find Winning Products Before Your Competitors
+            Find Winning Products. Build Better Ads. Scale Faster.
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
-            AI-powered product research for Shopify dropshippers. Discover trends, analyze competition, and generate ad angles in seconds.
+            Launchory is the AI-powered research platform built for Shopify dropshippers. Find winning products, analyze competition, and generate ad creatives — all in one place.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
             <Link
               href="/auth/signup"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3.5 rounded-xl transition-colors"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-4 rounded-full transition-colors"
             >
               Start for Free
               <ArrowRight size={16} />
             </Link>
             <a
               href="#features"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-transparent hover:bg-gray-900 text-white font-semibold px-6 py-3.5 rounded-xl transition-colors border border-gray-700 hover:border-gray-500"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-transparent hover:bg-gray-900 text-white font-semibold px-8 py-4 rounded-full transition-colors border border-gray-700 hover:border-gray-500"
             >
               See How It Works
             </a>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-gray-500 text-sm mb-16">
+            <span>✓ No credit card required</span>
+            <span>✓ 3 free AI analyses</span>
+            <span>✓ Cancel anytime</span>
           </div>
 
           {/* Product preview mockup */}
@@ -206,12 +210,15 @@ export default async function LandingPage() {
       <section id="features" className="max-w-6xl mx-auto px-6 py-24 scroll-mt-16">
         <div className="text-center mb-14">
           <h2 className="text-3xl font-bold text-white mb-3">Everything you need to find winners</h2>
-          <p className="text-gray-400">One platform, from discovery to launch — plus a Chrome extension for one-click research on AliExpress.</p>
+          <p className="text-gray-400">One platform, from discovery to launch.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature) => (
-            <div key={feature.title} className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-gray-600 transition-colors">
-              <div className="w-11 h-11 bg-indigo-600 rounded-lg flex items-center justify-center mb-4">
+            <div
+              key={feature.title}
+              className="h-full flex flex-col bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-gray-600 hover:-translate-y-1 transition-all duration-200"
+            >
+              <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center mb-4 shrink-0">
                 <feature.icon size={20} className="text-white" />
               </div>
               <h3 className="text-white font-bold text-base mb-2">{feature.title}</h3>
@@ -225,10 +232,10 @@ export default async function LandingPage() {
       {testimonials.length > 0 && (
         <section className="max-w-6xl mx-auto px-6 py-24">
           <div className="text-center mb-14">
-            <h2 className="text-3xl font-bold text-white mb-3">Trusted by dropshippers worldwide</h2>
+            <h2 className="text-3xl font-bold text-white mb-3">Loved by dropshippers worldwide</h2>
             <p className="text-gray-400">Real results from real stores.</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {testimonials.map((t) => (
               <TestimonialCard key={`${t.name}-${t.avatar_initials}`} testimonial={t} />
             ))}
@@ -245,13 +252,14 @@ export default async function LandingPage() {
         <div className="relative grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
           <div
             aria-hidden
-            className="hidden md:block absolute top-6 left-[16.6%] right-[16.6%] border-t border-dashed border-gray-800"
+            className="hidden md:block absolute top-7 left-[16.6%] right-[16.6%] border-t border-dashed border-gray-700"
           />
           {steps.map((step) => (
             <div key={step.number} className="relative text-center">
-              <div className="relative z-10 w-12 h-12 mx-auto bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg mb-4">
+              <div className="relative z-10 w-14 h-14 mx-auto bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xl mb-3 ring-4 ring-gray-950">
                 {step.number}
               </div>
+              <step.icon size={16} className="mx-auto text-indigo-400 mb-3" />
               <h3 className="text-white font-bold text-base mb-2">{step.title}</h3>
               <p className="text-gray-400 text-sm leading-relaxed">{step.description}</p>
             </div>
@@ -263,16 +271,21 @@ export default async function LandingPage() {
 
       {/* CTA */}
       <section className="max-w-6xl mx-auto px-6 py-24">
-        <div className="bg-indigo-900/40 border border-indigo-500/20 rounded-2xl p-12 text-center">
+        <div className="bg-gradient-to-br from-indigo-950 via-indigo-950 to-gray-950 border border-indigo-500/20 rounded-2xl p-12 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">Ready to find your next winning product?</h2>
-          <p className="text-gray-400 mb-8 max-w-xl mx-auto">Join dropshippers using Launchory to research smarter, not harder.</p>
+          <p className="text-gray-400 mb-8 max-w-xl mx-auto">Join thousands of dropshippers using Launchory to research smarter, not harder.</p>
           <Link
             href="/auth/signup"
-            className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3.5 rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-4 rounded-full transition-colors"
           >
-            Start for Free
+            Get Started Free
             <ArrowRight size={16} />
           </Link>
+          <p className="text-gray-500 text-sm mt-5">Free to start &bull; No credit card required &bull; Cancel anytime</p>
+          <p className="inline-flex items-center gap-1.5 text-indigo-400 text-xs font-medium mt-4">
+            <Flame size={12} />
+            New products added daily
+          </p>
         </div>
       </section>
 
@@ -280,13 +293,13 @@ export default async function LandingPage() {
       <footer className="border-t border-gray-800">
         <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="text-gray-500 text-sm">Launchory &copy; 2026</span>
-          <div className="flex items-center gap-6">
-            <Link href="/blog" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Blog</Link>
-            <Link href="/extension" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Chrome Extension</Link>
-            <Link href="/changelog" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Changelog</Link>
-            <Link href="/help" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Help</Link>
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
             <Link href="/privacy" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Privacy</Link>
             <Link href="/terms" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Terms</Link>
+            <Link href="/help" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Help</Link>
+            <Link href="/blog" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Blog</Link>
+            <Link href="/changelog" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Changelog</Link>
+            <Link href="/extension" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">Chrome Extension</Link>
           </div>
         </div>
       </footer>

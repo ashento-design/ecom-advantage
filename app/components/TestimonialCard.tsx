@@ -1,4 +1,4 @@
-import { Star } from 'lucide-react'
+import { Star, Quote } from 'lucide-react'
 
 export type TestimonialData = {
   name: string
@@ -22,8 +22,9 @@ function colorForName(name: string) {
 export function TestimonialCard({ testimonial }: { testimonial: TestimonialData }) {
   const subtitle = [testimonial.role, testimonial.company].filter(Boolean).join(' · ')
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-gray-600 transition-colors">
-      <div className="flex items-center gap-0.5 mb-4">
+    <div className="relative h-full flex flex-col bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-gray-600 transition-colors overflow-hidden">
+      <Quote size={64} className="absolute -top-2 -right-2 text-indigo-500/10 rotate-180" aria-hidden />
+      <div className="relative flex items-center gap-0.5 mb-4">
         {Array.from({ length: 5 }).map((_, i) => (
           <Star key={i} size={14} className={i < testimonial.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-700'} />
         ))}
